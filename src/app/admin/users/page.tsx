@@ -3,11 +3,14 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/src/store/auth";
 import { User } from "@/src/lib/types";
+import ConfirmDialog from "@/src/components/ConfirmDialog";
+import { useToast } from "@/src/store/toast";
 
 export default function AdminUsersPage() {
   const token = useAuth((s) => s.token);
+  const push = useToast((s) => s.push);
   const [users, setUsers] = useState<User[]>([]);
-  const [message, setMessage] = useState<string | null>(null);
+  const [confirmId, setConfirmId] = useState<number | null>(null);
 
   const load = async () => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -33,8 +36,10 @@ export default function AdminUsersPage() {
       body: JSON.stringify(patch),
     });
     if (res.ok) {
-      setMessage("Cập nhật người dùng thành công");
+      push({ text: "Cập nhật người dùng thành công", type: "success" });
       await load();
+    } else {
+      push({ text: "Cập nhật thất bại", type: "error" });
     }
   };
 
@@ -48,11 +53,13 @@ export default function AdminUsersPage() {
     });
     if (res.ok) {
       const data = await res.json();
-      setMessage(`Mật khẩu mới cho ${data.email}: ${data.newPassword}`);
+      push({ text: `Mật khẩu mới cho ${data.email}: ${data.newPassword}`, type: "info" });
+    } else {
+      push({ text: "Reset mật khẩu thất bại", type: "error" });
     }
   };
 
-  const deleteUser = async (id: number) => {
+  const deleteUserReq = async (id: number) => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
     const res = await fetch(`${base}/api/users/${id}`, {
       method: "DELETE",
@@ -61,15 +68,16 @@ export default function AdminUsersPage() {
       },
     });
     if (res.ok) {
-      setMessage("Đã xóa người dùng");
+      push({ text: "Đã xóa người dùng", type: "success" });
       await load();
+    } else {
+      push({ text: "Xóa người dùng thất bại", type: "error" });
     }
   };
 
   return (
     <div className="py-8 space-y-6">
       <h1 className="text-2xl font-bold">Quản lý người dùng</h1>
-      {message && <p className="text-sm">{message}</p>}
       <div className="space-y-2">
         {users.map((u) => (
           <div key={u.id} className="border rounded p-3 flex items-center justify-between">
@@ -116,7 +124,7 @@ export default function AdminUsersPage() {
                 Reset mật khẩu
               </button>
               <button
-                onClick={() => deleteUser(u.id)}
+                onClick={() => setConfirmId(u.id)}
                 className="px-3 py-1 rounded border hover:bg-red-100 text-sm"
               >
                 Xóa
@@ -125,6 +133,19 @@ export default function AdminUsersPage() {
           </div>
         ))}
       </div>
+
+      <ConfirmDialog
+        open={confirmId !== null}
+        title="Xóa người dùng?"
+        description="Hành động này không thể hoàn tác."
+        confirmText="Xóa"
+        cancelText="Hủy"
+        onConfirm={() => {
+          if (confirmId) deleteUserReq(confirmId);
+          setConfirmId(null);
+        }}
+        onCancel={() => setConfirmId(null)}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/src/store/auth";
+import AdminMenu from "@/src/components/AdminMenu";
 
 export default function Header() {
   const pathname = usePathname();
@@ -37,33 +38,7 @@ export default function Header() {
           {navLink("/tours", "Tours")}
           {navLink("/about", "About")}
           {navLink("/contact", "Contact")}
-          {user?.role === "admin" && (
-            // Admin dropdown
-            (() => {
-              // inline component state via closure
-              // eslint-disable-next-line react-hooks/rules-of-hooks
-              const [adminOpen, setAdminOpen] = useState(false);
-              return (
-                <div className="relative">
-                  <button
-                    className="px-3 py-2 rounded border hover:bg-black/5"
-                    onClick={() => setAdminOpen((v) => !v)}
-                  >
-                    Admin
-                  </button>
-                  {adminOpen && (
-                    <div className="absolute right-0 mt-2 w-48 rounded border bg-background shadow">
-                      <div className="flex flex-col p-2">
-                        {navLink("/admin/dashboard", "Dashboard")}
-                        {navLink("/admin/users", "Users")}
-                        {navLink("/admin/tours", "Tours")}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })()
-          )}
+          {user?.role === "admin" && <AdminMenu />}
         </nav>
 
         <div className="hidden md:flex items-center gap-2">

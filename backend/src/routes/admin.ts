@@ -26,4 +26,10 @@ router.get("/dashboard", requireAuth, async (req, res) => {
   });
 });
 
+router.get("/bookings", requireAuth, async (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
+  const items = await Booking.findAll({ order: [["id", "DESC"]] });
+  res.json(items);
+});
+
 export default router;

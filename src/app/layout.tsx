@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/src/components/Header";
 import Footer from "@/src/components/Footer";
+import dynamic from "next/dynamic";
+
+const ToastContainer = dynamic(() => import("@/src/components/ToastContainer"), { ssr: false });
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +35,7 @@ export default function RootLayout({
         <Header />
         <main className="max-w-6xl mx-auto px-4">{children}</main>
         <Footer />
+        <ToastContainer />
       </body>
     </html>
   );
