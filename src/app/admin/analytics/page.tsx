@@ -96,6 +96,13 @@ export default function AdminAnalyticsPage() {
           <a className="text-sm underline" href={`${base}/api/admin/export/top-revenue?format=xlsx`} target="_blank" rel="noreferrer">
             XLSX
           </a>
+          <span className="mx-2">|</span>
+          <a className="text-sm underline" href={`${base}/api/admin/export/top-favorites?format=csv`} target="_blank" rel="noreferrer">
+            Export Top favorites (CSV)
+          </a>
+          <a className="text-sm underline" href={`${base}/api/admin/export/top-favorites?format=xlsx`} target="_blank" rel="noreferrer">
+            XLSX
+          </a>
         </div>
         {revenue.length === 0 ? (
           <p className="text-sm">Chưa có dữ liệu doanh thu.</p>

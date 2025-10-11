@@ -32,11 +32,21 @@ router.get("/dashboard", requireAuth, async (req, res) => {
 router.get("/top-favorites", requireAuth, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
   const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
+  const startDate = req.query.startDate ? new Date(String(req.query.startDate)) : null;
+  const endDate = req.query.endDate ? new Date(String(req.query.endDate)) : null;
+
+  const include: any = { model: Favorite, attributes: [], required: false };
+  if (startDate || endDate) {
+    include.where = {};
+    if (startDate) include.where.createdAt = { ...(include.where.createdAt || {}), $gte: startDate } as any;
+    if (endDate) include.where.createdAt = { ...(include.where.createdAt || {}), $lte: endDate } as any;
+  }
+
   const rows = await Tour.findAll({
     attributes: {
       include: [[fn("COUNT", col("favorites.id")), "favCount"]],
     },
-    include: [{ model: Favorite, attributes: [], required: false }],
+    include: [include],
     group: ["tour.id"],
     order: [[literal("favCount"), "DESC"]],
     limit,
@@ -216,9 +226,19 @@ router.get("/revenue", requireAuth, async (req, res) => {
 router.get("/top-bookings", requireAuth, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
   const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
+  const startDate = req.query.startDate ? new Date(String(req.query.startDate)) : null;
+  const endDate = req.query.endDate ? new Date(String(req.query.endDate)) : null;
+
+  const include: any = { model: Booking, attributes: [], required: false };
+  if (startDate || endDate) {
+    include.where = {};
+    if (startDate) include.where.createdAt = { ...(include.where.createdAt || {}), $gte: startDate } as any;
+    if (endDate) include.where.createdAt = { ...(include.where.createdAt || {}), $lte: endDate } as any;
+  }
+
   const rows = await Tour.findAll({
     attributes: { include: [[fn("COUNT", col("bookings.id")), "bookCount"]] },
-    include: [{ model: Booking, attributes: [], required: false }],
+    include: [include],
     group: ["tour.id"],
     order: [[literal("bookCount"), "DESC"]],
     limit,
@@ -231,9 +251,16 @@ router.get("/top-bookings", requireAuth, async (req, res) => {
 router.get("/top-revenue", requireAuth, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
   const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
+  const startDate = req.query.startDate ? new Date(String(req.query.startDate)) : null;
+  const endDate = req.query.endDate ? new Date(String(req.query.endDate)) : null;
+
+  const where: any = { status: "succeeded" };
+  if (startDate) where.createdAt = { ...(where.createdAt || {}), $gte: startDate } as any;
+  if (endDate) where.createdAt = { ...(where.createdAt || {}), $lte: endDate } as any;
+
   const rows = await Tour.findAll({
     attributes: { include: [[fn("SUM", col("payments.amount")), "revenueSum"]] },
-    include: [{ model: Payment, attributes: [], required: false, where: { status: "succeeded" } }],
+    include: [{ model: Payment, attributes: [], required: false, where }],
     group: ["tour.id"],
     order: [[literal("revenueSum"), "DESC"]],
     limit,
@@ -304,6 +331,49 @@ router.get("/export/top-revenue", requireAuth, async (req, res) => {
     const csv = lines.join("\n");
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader("Content-Disposition", "attachment; filename=top_revenue.csv");
+    res.send(csv);
+  }
+});
+
+router.get("/export/top-favorites", requireAuth, async (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
+  const format = (req.query.format as string) || "csv";
+  const startDate = req.query.startDate ? new Date(String(req.query.startDate)) : null;
+  const endDate = req.query.endDate ? new Date(String(req.query.endDate)) : null;
+
+  const include: any = { model: Favorite, attributes: [], required: false };
+  if (startDate || endDate) {
+    include.where = {};
+    if (startDate) include.where.createdAt = { ...(include.where.createdAt || {}), $gte: startDate } as any;
+    if (endDate) include.where.createdAt = { ...(include.where.createdAt || {}), $lte: endDate } as any;
+  }
+
+  const rows = await Tour.findAll({
+    attributes: { include: [[fn("COUNT", col("favorites.id")), "favCount"]] },
+    include: [include],
+    group: ["tour.id"],
+    order: [[literal("favCount"), "DESC"]],
+    subQuery: false,
+  });
+  const plain = rows.map((r: any) => ({ id: r.id, title: r.title, favCount: Number(r.get("favCount") || 0) }));
+
+  if (format === "xlsx") {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("top_favorites");
+    const headers = ["id", "title", "favCount"];
+    sheet.addRow(headers);
+    for (const obj of plain) sheet.addRow(headers.map((h) => (obj as any)[h] ?? ""));
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", "attachment; filename=top_favorites.xlsx");
+    await workbook.xlsx.write(res as any);
+    res.end();
+  } else {
+    const headers = ["id", "title", "favCount"];
+    const lines = [headers.join(",")];
+    for (const obj of plain) lines.push(headers.map((h) => JSON.stringify((obj as any)[h] ?? "")).join(","));
+    const csv = lines.join("\n");
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", "attachment; filename=top_favorites.csv");
     res.send(csv);
   }
 });
