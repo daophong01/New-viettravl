@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/src/store/auth";
 
 export default function Header() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const user = useAuth((s) => s.user);
+  const logout = useAuth((s) => s.logout);
 
   const navLink = (href: string, label: string) => {
     const active = pathname === href;
@@ -34,21 +37,42 @@ export default function Header() {
           {navLink("/tours", "Tours")}
           {navLink("/about", "About")}
           {navLink("/contact", "Contact")}
+          {user?.role === "admin" && navLink("/admin", "Admin")}
         </nav>
 
         <div className="hidden md:flex items-center gap-2">
-          <Link
-            href="/auth/login"
-            className="px-3 py-2 rounded border border-black/10 dark:border-white/15 hover:bg-black/5"
-          >
-            Đăng nhập
-          </Link>
-          <Link
-            href="/auth/register"
-            className="px-3 py-2 rounded bg-foreground text-background hover:opacity-90"
-          >
-            Đăng ký
-          </Link>
+          {user ? (
+            <>
+              <span className="text-sm">Xin chào, {user.name}</span>
+              <Link
+                href="/user/dashboard"
+                className="px-3 py-2 rounded border border-black/10 dark:border-white/15 hover:bg-black/5"
+              >
+                Dashboard
+              </Link>
+              <button
+                onClick={() => logout()}
+                className="px-3 py-2 rounded bg-foreground text-background hover:opacity-90"
+              >
+                Đăng xuất
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/auth/login"
+                className="px-3 py-2 rounded border border-black/10 dark:border-white/15 hover:bg-black/5"
+              >
+                Đăng nhập
+              </Link>
+              <Link
+                href="/auth/register"
+                className="px-3 py-2 rounded bg-foreground text-background hover:opacity-90"
+              >
+                Đăng ký
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -66,20 +90,40 @@ export default function Header() {
             {navLink("/tours", "Tours")}
             {navLink("/about", "About")}
             {navLink("/contact", "Contact")}
+            {user?.role === "admin" && navLink("/admin", "Admin")}
           </div>
           <div className="flex gap-2 mt-2">
-            <Link
-              href="/auth/login"
-              className="px-3 py-2 rounded border border-black/10 dark:border-white/15 hover:bg-black/5 w-full text-center"
-            >
-              Đăng nhập
-            </Link>
-            <Link
-              href="/auth/register"
-              className="px-3 py-2 rounded bg-foreground text-background hover:opacity-90 w-full text-center"
-            >
-              Đăng ký
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href="/user/dashboard"
+                  className="px-3 py-2 rounded border border-black/10 dark:border-white/15 hover:bg-black/5 w-full text-center"
+                >
+                  Dashboard
+                </Link>
+                <button
+                  onClick={() => logout()}
+                  className="px-3 py-2 rounded bg-foreground text-background hover:opacity-90 w-full text-center"
+                >
+                  Đăng xuất
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/auth/login"
+                  className="px-3 py-2 rounded border border-black/10 dark:border-white/15 hover:bg-black/5 w-full text-center"
+                >
+                  Đăng nhập
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className="px-3 py-2 rounded bg-foreground text-background hover:opacity-90 w-full text-center"
+                >
+                  Đăng ký
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

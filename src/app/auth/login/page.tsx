@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/src/store/auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const router = useRouter();
+  const login = useAuth((s) => s.login);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,6 +17,8 @@ export default function LoginPage() {
       headers: { "Content-Type": "application/json" },
     });
     if (res.ok) {
+      const data = await res.json();
+      login({ user: data.user, token: data.token });
       router.push("/");
     }
   };

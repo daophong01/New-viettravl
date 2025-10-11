@@ -45,11 +45,14 @@ export default async function TourDetailPage({
         </p>
         <p className="text-sm leading-relaxed">{tour.description}</p>
         <div className="flex items-center gap-2 text-sm"><span>⭐ {tour.rating.toFixed(1)}</span></div>
-        <form action="/api/bookings" method="POST" className="mt-4 flex gap-2">
-          <input type="hidden" name="userId" value="1" />
-          <input type="hidden" name="tourId" value={tour.id} />
-          <button className="px-4 py-2 rounded bg-foreground text-background">Đặt ngay</button>
-        </form>
+        {/* Booking */}
+        {/* Client booking form */}
+        {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+        {/* @ts-expect-error Server Component using client child is fine here */}
+        {await (async () => {
+          const { default: BookingForm } = await import("@/src/components/BookingForm");
+          return <BookingForm tourId={tour.id} />;
+        })()}
       </div>
 
       <div className="space-y-3">
