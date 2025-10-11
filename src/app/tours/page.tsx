@@ -16,14 +16,13 @@ export default function ToursPage() {
   const [page, setPage] = useState(1);
   const pageSize = 6;
 
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     (async () => {
       const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-      const res = await fetch(`${base}/api/tours`);
+      const res = await fetch(`${base}/api/tours?page=1&pageSize=100`);
       if (res.ok) {
-        setTours(await res.json());
+        const data = await res.json();
+        setTours(Array.isArray(data) ? data : data.items || []);
       }
       setLoading(false);
     })();

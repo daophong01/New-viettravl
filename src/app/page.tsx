@@ -2,14 +2,34 @@ import Image from "next/image";
 import Link from "next/link";
 import TourCard from "@/src/components/TourCard";
 import { Tour } from "@/src/lib/types";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "TravelGo - Travel Booking Website",
+  description: "Đặt tour du lịch dễ dàng với TravelGo",
+  openGraph: {
+    title: "TravelGo - Travel Booking Website",
+    description: "Đặt tour du lịch dễ dàng với TravelGo",
+    url: (process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000") + "/",
+    images: [{ url: "/next.svg", alt: "TravelGo" }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TravelGo - Travel Booking Website",
+    description: "Đặt tour du lịch dễ dàng với TravelGo",
+    images: ["/next.svg"],
+  },
+};
 
 async function getTours(): Promise<Tour[]> {
   const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-  const res = await fetch(`${base}/api/tours`, {
+  const res = await fetch(`${base}/api/tours?page=1&pageSize=100`, {
     next: { revalidate: 60 },
   });
   if (!res.ok) return [];
-  return res.json();
+  const data = await res.json();
+  return Array.isArray(data) ? data : data.items || [];
 }
 
 export default async function Home() {

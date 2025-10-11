@@ -4,9 +4,17 @@ import { Tour } from "../models/Tour.js";
 
 const router = Router();
 
-router.get("/", async (_req, res) => {
-  const items = await Tour.findAll();
-  res.json(items);
+router.get("/", async (req, res) => {
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const pageSize = Math.min(50, Math.max(1, Number(req.query.pageSize) || 100));
+  const offset = (page - 1) * pageSize;
+
+  const { rows, count } = await Tour.findAndCountAll({
+    order: [["id", "ASC"]],
+    offset,
+    limit: pageSize,
+  });
+  res.json({ items: rows, total: count, page, pageSize });
 });
 
 router.get("/:id", async (req, res) => {
