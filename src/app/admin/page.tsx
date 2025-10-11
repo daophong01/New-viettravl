@@ -104,12 +104,24 @@ export default function AdminPage() {
             value={form.duration || ""}
             onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))}
           />
-          <input
-            placeholder="Image (URL)"
-            className="border rounded px-3 py-2"
-            value={form.image || ""}
-            onChange={(e) => setForm((f) => ({ ...f, image: e.target.value }))}
-          />
+          <div className="space-y-2">
+            <input
+              placeholder="Image (URL)"
+              className="border rounded px-3 py-2 w-full"
+              value={form.image || ""}
+              onChange={(e) => setForm((f) => ({ ...f, image: e.target.value }))}
+            />
+            {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+            {/* @ts-expect-error dynamic import in client component */}
+            {(() => {
+              const ImageUpload = require("@/src/components/ImageUpload").default;
+              return (
+                <ImageUpload
+                  onUploaded={(url: string) => setForm((f) => ({ ...f, image: url }))}
+                />
+              );
+            })()}
+          </div>
           <input
             placeholder="Mô tả"
             className="border rounded px-3 py-2"

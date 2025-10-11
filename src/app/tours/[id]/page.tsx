@@ -55,26 +55,12 @@ export default async function TourDetailPage({
         })()}
       </div>
 
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold">Đánh giá</h2>
-        {reviews.length === 0 ? (
-          <p className="text-sm text-black/70 dark:text-white/70">Chưa có đánh giá</p>
-        ) : (
-          <div className="space-y-3">
-            {reviews.map((r) => (
-              <div key={r.id} className="border rounded p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">⭐ {r.rating}</span>
-                  <span className="text-xs text-black/60 dark:text-white/60">
-                    {new Date(r.createdAt).toLocaleDateString("vi-VN")}
-                  </span>
-                </div>
-                <p className="text-sm mt-2">{r.comment}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+      {/* @ts-expect-error Server Component using client child is fine here */}
+      {await (async () => {
+        const { default: TourReviewsSection } = await import("@/src/components/TourReviewsSection");
+        return <TourReviewsSection tourId={tour.id} />;
+      })()}
     </div>
   );
 }

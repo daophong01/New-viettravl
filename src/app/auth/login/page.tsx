@@ -19,6 +19,8 @@ export default function LoginPage() {
     if (res.ok) {
       const data = await res.json();
       login({ user: data.user, token: data.token });
+      // Set cookie for middleware protection
+      document.cookie = `token=${data.token}; path=/`;
       router.push("/");
     }
   };
