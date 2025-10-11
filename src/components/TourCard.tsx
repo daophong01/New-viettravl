@@ -4,6 +4,7 @@ import { Tour } from "@/src/lib/types";
 import { useAuth } from "@/src/store/auth";
 import { useToast } from "@/src/store/toast";
 import { useEffect, useState } from "react";
+import PaymentButton from "@/src/components/PaymentButton";
 
 export default function TourCard({ tour, isFavorited }: { tour: Tour; isFavorited?: boolean }) {
   const token = useAuth((s) => s.token);
@@ -118,7 +119,7 @@ export default function TourCard({ tour, isFavorited }: { tour: Tour; isFavorite
       <div className="p-4 space-y-2">
         <h3 className="font-semibold">{tour.title}</h3>
         <p className="text-sm text-black/70 dark:text-white/70">{tour.location}</p>
-        <p className="text-sm">{tour.duration}</p>
+        <p className="text.sm">{tour.duration}</p>
         <p className="font-medium">
           {new Intl.NumberFormat("vi-VN", {
             style: "currency",
@@ -127,12 +128,15 @@ export default function TourCard({ tour, isFavorited }: { tour: Tour; isFavorite
         </p>
         <div className="flex items-center justify-between pt-2">
           <span className="text-sm">⭐ {tour.rating.toFixed(1)}</span>
-          <Link
-            href={`/tours/${tour.id}`}
-            className="px-3 py-2 rounded bg-foreground text-background text-sm hover:opacity-90"
-          >
-            Xem chi tiết
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/tours/${tour.id}`}
+              className="px-3 py-2 rounded border hover:bg-black/5 text-sm"
+            >
+              Xem chi tiết
+            </Link>
+            <PaymentButton tourId={tour.id as any} title={tour.title} amount={tour.price as any} />
+          </div>
         </div>
       </div>
     </div>
