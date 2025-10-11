@@ -8,6 +8,8 @@ export class User extends Model {
   declare password: string;
   declare role: "user" | "admin";
   declare status: "active" | "blocked";
+  declare avatar: string | null;
+  declare avatarPublicId: string | null;
 }
 
 User.init(
@@ -18,6 +20,8 @@ User.init(
     password: { type: DataTypes.STRING, allowNull: false },
     role: { type: DataTypes.ENUM("user", "admin"), allowNull: false, defaultValue: "user" },
     status: { type: DataTypes.ENUM("active", "blocked"), allowNull: false, defaultValue: "active" },
+    avatar: { type: DataTypes.STRING, allowNull: true },
+    avatarPublicId: { type: DataTypes.STRING, allowNull: true },
   },
   { sequelize, modelName: "user" }
 );

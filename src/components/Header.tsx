@@ -51,6 +51,12 @@ export default function Header() {
               >
                 Dashboard
               </Link>
+              <Link
+                href="/user/settings"
+                className="px-3 py-2 rounded border border-black/10 dark:border-white/15 hover:bg-black/5"
+              >
+                Cài đặt
+              </Link>
               <button
                 onClick={() => {
                   logout();
