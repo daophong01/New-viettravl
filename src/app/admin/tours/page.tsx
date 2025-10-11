@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/src/store/auth";
 import { Tour } from "@/src/lib/types";
 import ImageUpload from "@/src/components/ImageUpload";
@@ -20,7 +20,16 @@ export default function AdminToursPage() {
     duration: "",
     image: "",
     description: "",
+    category: "domestic" as any,
+    startDate: "" as any,
+    seatsLeft: 0 as any,
+    active: true as any,
   });
+
+  const [q, setQ] = useState("");
+  const [filterLocation, setFilterLocation] = useState("");
+  const [filterCategory, setFilterCategory] = useState<"all" | "domestic" | "international">("all");
+  const [filterActive, setFilterActive] = useState<"all" | "active" | "inactive">("all");
 
   useEffect(() => {
     (async () => {
@@ -41,12 +50,16 @@ export default function AdminToursPage() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token || ""}`,
       },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        ...form,
+        startDate: form.startDate ? new Date(form.startDate as any) : null,
+        seatsLeft: Number(form.seatsLeft || 0),
+      }),
     });
     if (res.ok) {
       const created = await res.json();
       setTours((prev) => [...prev, created]);
-      setForm({ title: "", location: "", price: 0, duration: "", image: "", description: "" });
+      setForm({ title: "", location: "", price: 0, duration: "", image: "", description: "", category: "domestic" as any, startDate: "" as any, seatsLeft: 0 as any, active: true as any });
     }
   };
 
@@ -79,6 +92,14 @@ export default function AdminToursPage() {
     }
   };
 
+  const filtered = useMemo(() => {
+    return tours
+      .filter((t) => (q ? (t.title || "").toLowerCase().includes(q.toLowerCase()) : true))
+      .filter((t) => (filterLocation ? (t.location || "").toLowerCase().includes(filterLocation.toLowerCase()) : true))
+      .filter((t) => (filterCategory === "all" ? true : (t as any).category === filterCategory))
+      .filter((t) => (filterActive === "all" ? true : ((t as any).active ? "active" : "inactive") === filterActive));
+  }, [tours, q, filterLocation, filterCategory, filterActive]);
+
   return (
     <div className="py-8 space-y-8">
       <h1 className="text-2xl font-bold">Quản lý Tours</h1>
@@ -106,11 +127,41 @@ export default function AdminToursPage() {
             onChange={(e) => setForm((f) => ({ ...f, price: Number(e.target.value) }))}
           />
           <input
-            placeholder="Thời gian"
+            placeholder="Thời gian (vd: 3 ngày 2 đêm)"
             className="border rounded px-3 py-2"
             value={form.duration || ""}
             onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))}
           />
+          <input
+            type="date"
+            placeholder="Ngày khởi hành"
+            className="border rounded px-3 py-2"
+            value={(form.startDate as any) || ""}
+            onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value as any }))}
+          />
+          <input
+            type="number"
+            placeholder="Số chỗ còn lại"
+            className="border rounded px-3 py-2"
+            value={(form.seatsLeft as any) || 0}
+            onChange={(e) => setForm((f) => ({ ...f, seatsLeft: Number(e.target.value) as any }))}
+          />
+          <select
+            className="border rounded px-3 py-2"
+            value={(form.category as any) || "domestic"}
+            onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as any }))}
+          >
+            <option value="domestic">Tour trong nước</option>
+            <option value="international">Tour quốc tế</option>
+          </select>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={!!form.active}
+              onChange={(e) => setForm((f) => ({ ...f, active: e.target.checked as any }))}
+            />
+            Hoạt động
+          </label>
           <div className="space-y-2">
             <input
               placeholder="Image (URL)"
@@ -138,8 +189,24 @@ export default function AdminToursPage() {
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">Danh sách tours</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+          <input className="border rounded px-3 py-2" placeholder="Tìm kiếm tên..." value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="border rounded px-3 py-2" placeholder="Lọc theo địa điểm..." value={filterLocation} onChange={(e) => setFilterLocation(e.target.value)} />
+          <select className="border rounded px-3 py-2" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value as any)}>
+            <option value="all">Tất cả danh mục</option>
+            <option value="domestic">Trong nước</option>
+            <option value="international">Quốc tế</option>
+          </select>
+          <select className="border rounded px-3 py-2" value={filterActive} onChange={(e) => setFilterActive(e.target.value as any)}>
+            <option value="all">Tất cả trạng thái</option>
+            <option value="active">Hoạt động</option>
+            <option value="inactive">Không hoạt động</option>
+          </select>
+        </div>
+
         <div className="space-y-3">
-          {tours.map((t) => (
+          {filtered.map((t) => (
             <div key={t.id} className="border rounded p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <strong>{t.title}</strong>
@@ -171,6 +238,34 @@ export default function AdminToursPage() {
                   type="number"
                   onBlur={(e) => updateTour(t.id, { price: Number(e.target.value) })}
                 />
+                <input
+                  type="date"
+                  className="border rounded px-2 py-1"
+                  defaultValue={(t as any).startDate ? new Date((t as any).startDate as any).toISOString().slice(0, 10) : ""}
+                  onBlur={(e) => updateTour(t.id, { startDate: e.target.value as any } as any)}
+                />
+                <input
+                  type="number"
+                  className="border rounded px-2 py-1"
+                  defaultValue={(t as any).seatsLeft || 0}
+                  onBlur={(e) => updateTour(t.id, { seatsLeft: Number(e.target.value) as any })}
+                />
+                <select
+                  className="border rounded px-2 py-1"
+                  defaultValue={(t as any).category || "domestic"}
+                  onBlur={(e) => updateTour(t.id, { category: e.target.value as any })}
+                >
+                  <option value="domestic">Trong nước</option>
+                  <option value="international">Quốc tế</option>
+                </select>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    defaultChecked={!!(t as any).active}
+                    onChange={(e) => updateTour(t.id, { active: e.target.checked as any })}
+                  />
+                  Hoạt động
+                </label>
                 <div className="flex items-center gap-2">
                   <input
                     className="border rounded px-2 py-1 flex-1"
@@ -185,12 +280,12 @@ export default function AdminToursPage() {
                     onUploadedPublicId={(pid) => updateTour(t.id, { imagePublicId: pid })}
                   />
                 </div>
-                {/* Quick payment test */}
-                {(() => {
-                  const PaymentButton = require("@/src/components/PaymentButton").default;
-                  return <PaymentButton tourId={t.id as any} title={t.title} amount={t.price as any} />;
-                })()}
               </div>
+              {/* Quick payment test */}
+              {(() => {
+                const PaymentButton = require("@/src/components/PaymentButton").default;
+                return <PaymentButton tourId={t.id as any} title={t.title} amount={t.price as any} />;
+              })()}
             </div>
           ))}
         </div>

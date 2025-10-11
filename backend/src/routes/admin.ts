@@ -10,6 +10,11 @@ function isAdmin(req: any) {
   return req.user?.role === "admin";
 }
 
+function hasRole(req: any, roles: string[]) {
+  const r = (req.user?.role || "").toLowerCase();
+  return roles.map((x) => x.toLowerCase()).includes(r);
+}
+
 router.get("/dashboard", requireAuth, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
 
