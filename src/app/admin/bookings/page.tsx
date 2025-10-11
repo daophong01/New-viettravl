@@ -59,17 +59,25 @@ export default function AdminBookingsPage() {
     <div className="py-8 space-y-6">
       <h1 className="text-2xl font-bold">Quản lý Bookings</h1>
 
-      <div className="flex gap-2">
-        <select
-          className="border rounded px-3 py-2"
-          value={sort}
-          onChange={(e) => setSort(e.target.value as any)}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex gap-2">
+          <select
+            className="border rounded px-3 py-2"
+            value={sort}
+            onChange={(e) => setSort(e.target.value as any)}
+          >
+            <option value="id_desc">ID mới nhất</option>
+            <option value="id_asc">ID cũ nhất</option>
+            <option value="date_desc">Ngày mới nhất</option>
+            <option value="date_asc">Ngày cũ nhất</option>
+          </select>
+        </div>
+        <a
+          href={(process.env.NEXT_PUBLIC_API_BASE_URL || "") + "/api/admin/export/bookings"}
+          className="px-3 py-1 rounded bg-foreground text-background text-sm hover:opacity-90"
         >
-          <option value="id_desc">ID mới nhất</option>
-          <option value="id_asc">ID cũ nhất</option>
-          <option value="date_desc">Ngày mới nhất</option>
-          <option value="date_asc">Ngày cũ nhất</option>
-        </select>
+          Xuất CSV
+        </a>
       </div>
 
       <div className="space-y-2">

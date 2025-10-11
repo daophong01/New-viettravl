@@ -20,10 +20,11 @@ export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
+  const [sort, setSort] = useState<"id_asc" | "id_desc" | "name_asc" | "name_desc" | "role_asc" | "role_desc">("id_asc");
 
   const load = async () => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-    const res = await fetch(`${base}/api/users?page=${page}&pageSize=${pageSize}`, {
+    const res = await fetch(`${base}/api/users?page=${page}&pageSize=${pageSize}&sort=${sort}`, {
       headers: { Authorization: `Bearer ${token || ""}` },
     });
     if (res.ok) {
@@ -36,7 +37,7 @@ export default function AdminUsersPage() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, page]);
+  }, [token, page, sort]);
 
   const updateUser = async (id: number, patch: Partial<User>) => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -91,6 +92,21 @@ export default function AdminUsersPage() {
   return (
     <div className="py-8 space-y-6">
       <h1 className="text-2xl font-bold">Quản lý người dùng</h1>
+
+      <div className="flex gap-2">
+        <select
+          className="border rounded px-3 py-2"
+          value={sort}
+          onChange={(e) => setSort(e.target.value as any)}
+        >
+          <option value="id_asc">ID tăng dần</option>
+          <option value="id_desc">ID giảm dần</option>
+          <option value="name_asc">Tên A-Z</option>
+          <option value="name_desc">Tên Z-A</option>
+          <option value="role_asc">Role A-Z</option>
+          <option value="role_desc">Role Z-A</option>
+        </select>
+      </div>
       <div className="space-y-2">
         {users.map((u) => (
           <div key={u.id} className="border rounded p-3 flex items-center justify-between">

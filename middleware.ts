@@ -13,19 +13,21 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  const res = NextResponse.next();
+
   if (isAdminPath) {
     // Verify only for admin paths to reduce calls
     try {
       const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-      const res = await fetch(`${base}/api/auth/verify`, {
+      const verify = await fetch(`${base}/api/auth/verify`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) {
+      if (!verify.ok) {
         const url = req.nextUrl.clone();
         url.pathname = "/auth/login";
         return NextResponse.redirect(url);
       }
-      const data = await res.json();
+      const data = await verify.json();
       if (data?.user?.role !== "admin") {
         const url = req.nextUrl.clone();
         url.pathname = "/";
@@ -36,9 +38,11 @@ export async function middleware(req: NextRequest) {
       url.pathname = "/auth/login";
       return NextResponse.redirect(url);
     }
+    // add noindex headers for admin pages
+    res.headers.set("X-Robots-Tag", "noindex, nofollow");
   }
 
-  return NextResponse.next();
+  return res;
 }
 
 export const config = {

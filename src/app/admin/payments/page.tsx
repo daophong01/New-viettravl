@@ -147,24 +147,33 @@ export default function AdminPaymentsPage() {
         )}
       </div>
 
-      <div className="flex items-center justify-center gap-2">
-        <button
-          className="px-3 py-1 rounded border hover:bg-black/5"
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            className="px-3 py-1 rounded border hover:bg-black/5"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            Trang trước
+          </button>
+          <span className="text-sm">
+            {page} / {Math.max(1, Math.ceil(total / pageSize))}
+          </span>
+          <button
+            className="px-3 py-1 rounded border hover:bg-black/5"
+            onClick={() => setPage((p) => Math.min(Math.max(1, Math.ceil(total / pageSize)), p + 1))}
+            disabled={page >= Math.ceil(total / pageSize)}
+          >
+            Trang sau
+          </button>
+        </div>
+
+        <a
+          href={(process.env.NEXT_PUBLIC_API_BASE_URL || "") + "/api/admin/export/payments"}
+          className="px-3 py-1 rounded bg-foreground text-background text-sm hover:opacity-90"
         >
-          Trang trước
-        </button>
-        <span className="text-sm">
-          {page} / {Math.max(1, Math.ceil(total / pageSize))}
-        </span>
-        <button
-          className="px-3 py-1 rounded border hover:bg-black/5"
-          onClick={() => setPage((p) => Math.min(Math.max(1, Math.ceil(total / pageSize)), p + 1))}
-          disabled={page >= Math.ceil(total / pageSize)}
-        >
-          Trang sau
-        </button>
+          Xuất CSV
+        </a>
       </div>
     </div>
   );

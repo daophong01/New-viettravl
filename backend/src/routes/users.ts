@@ -14,10 +14,18 @@ router.get("/", requireAuth, async (req, res) => {
   const page = Math.max(1, Number(req.query.page) || 1);
   const pageSize = Math.min(50, Math.max(1, Number(req.query.pageSize) || 10));
   const offset = (page - 1) * pageSize;
+  const sort = (req.query.sort as string) || "id_asc";
+
+  let order: any = [["id", "ASC"]];
+  if (sort === "id_desc") order = [["id", "DESC"]];
+  else if (sort === "name_asc") order = [["name", "ASC"]];
+  else if (sort === "name_desc") order = [["name", "DESC"]];
+  else if (sort === "role_asc") order = [["role", "ASC"]];
+  else if (sort === "role_desc") order = [["role", "DESC"]];
 
   const { rows, count } = await User.findAndCountAll({
     attributes: ["id", "name", "email", "role", "status"],
-    order: [["id", "ASC"]],
+    order,
     offset,
     limit: pageSize,
   });

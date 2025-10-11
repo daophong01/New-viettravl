@@ -108,4 +108,37 @@ router.get("/payments", requireAuth, async (req, res) => {
   res.json({ items: rows, total: count, page, pageSize });
 });
 
+// Exports CSV
+router.get("/export/:type", requireAuth, async (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
+  const type = (req.params.type || "").toLowerCase();
+  let rows: any[] = [];
+
+  if (type === "payments") {
+    rows = await Payment.findAll({ order: [["id", "DESC"]] });
+  } else if (type === "bookings") {
+    rows = await Booking.findAll({ order: [["id", "DESC"]] });
+  } else if (type === "reviews") {
+    rows = await Review.findAll({ order: [["id", "DESC"]] });
+  } else {
+    return res.status(400).json({ error: "Invalid type" });
+  }
+
+  const toCSV = (arr: any[]) => {
+    if (arr.length === 0) return "";
+    const headers = Object.keys(arr[0].toJSON ? arr[0].toJSON() : arr[0]);
+    const lines = [headers.join(",")];
+    for (const r of arr) {
+      const obj = r.toJSON ? r.toJSON() : r;
+      lines.push(headers.map((h) => JSON.stringify(obj[h] ?? "")).join(","));
+    }
+    return lines.join("\n");
+  };
+
+  const csv = toCSV(rows);
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename=${type}.csv`);
+  res.send(csv);
+});
+
 export default router;

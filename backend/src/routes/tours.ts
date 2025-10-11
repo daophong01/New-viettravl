@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import { Tour } from "../models/Tour.js";
+import cloudinary from "cloudinary";
 
 const router = Router();
 
@@ -37,6 +38,15 @@ router.post("/", requireAuth, async (req, res) => {
 router.put("/:id", requireAuth, async (req, res) => {
   const tour = await Tour.findByPk(req.params.id);
   if (!tour) return res.status(404).json({ error: "Not found" });
+
+  const { imagePublicId } = req.body || {};
+  // If updating imagePublicId and old exists, delete old image from Cloudinary
+  if (imagePublicId && tour.imagePublicId && imagePublicId !== tour.imagePublicId) {
+    try {
+      await cloudinary.v2.uploader.destroy(tour.imagePublicId);
+    } catch {}
+  }
+
   await tour.update(req.body || {});
   res.json(tour);
 });
@@ -44,6 +54,12 @@ router.put("/:id", requireAuth, async (req, res) => {
 router.delete("/:id", requireAuth, async (req, res) => {
   const tour = await Tour.findByPk(req.params.id);
   if (!tour) return res.status(404).json({ error: "Not found" });
+  // delete cloudinary image if present
+  if (tour.imagePublicId) {
+    try {
+      await cloudinary.v2.uploader.destroy(tour.imagePublicId);
+    } catch {}
+  }
   await tour.destroy();
   res.json({ ok: true });
 });
