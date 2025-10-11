@@ -5,16 +5,21 @@ import { useAuth } from "@/src/store/auth";
 
 export default function BookingForm({ tourId }: { tourId: number }) {
   const user = useAuth((s) => s.user);
+  const token = useAuth((s) => s.token);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const book = async () => {
     setLoading(true);
     setMessage(null);
-    const res = await fetch("/api/bookings", {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    const res = await fetch(`${base}/api/bookings`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user?.id ?? 1, tourId }),
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ tourId }),
     });
     setLoading(false);
     if (res.ok) {
@@ -29,7 +34,7 @@ export default function BookingForm({ tourId }: { tourId: number }) {
     <div className="mt-4 space-y-2">
       {!user && (
         <p className="text-sm text-black/70 dark:text-white/70">
-          Vui lòng đăng nhập để đặt tour (hệ thống sẽ tạm dùng user mặc định).
+          Vui lòng đăng nhập để đặt tour.
         </p>
       )}
       <button

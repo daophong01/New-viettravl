@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.js";
 import tourRoutes from "./routes/tours.js";
 import bookingRoutes from "./routes/bookings.js";
 import reviewRoutes from "./routes/reviews.js";
+import paymentRoutes from "./routes/payments.js";
 
 dotenv.config();
 const app = express();
@@ -19,6 +20,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/tours", tourRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/payments", paymentRoutes);
 
 const PORT = process.env.PORT || 4000;
 

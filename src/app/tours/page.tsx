@@ -17,7 +17,8 @@ export default function ToursPage() {
 
   useEffect(() => {
     (async () => {
-      const res = await fetch("/api/tours");
+      const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      const res = await fetch(`${base}/api/tours`);
       if (res.ok) {
         setTours(await res.json());
       }

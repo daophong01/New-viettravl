@@ -6,20 +6,21 @@ import { useAuth } from "@/src/store/auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const router = useRouter();
   const login = useAuth((s) => s.login);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch("/api/auth/login", {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    const res = await fetch(`${base}/api/auth/login`, {
       method: "POST",
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, password }),
       headers: { "Content-Type": "application/json" },
     });
     if (res.ok) {
       const data = await res.json();
       login({ user: data.user, token: data.token });
-      // Set cookie for middleware protection
       document.cookie = `token=${data.token}; path=/`;
       router.push("/");
     }
@@ -36,6 +37,14 @@ export default function LoginPage() {
           className="border rounded px-3 py-2 w-full"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          type="password"
+          required
+          placeholder="Mật khẩu"
+          className="border rounded px-3 py-2 w-full"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
         <button
           type="submit"

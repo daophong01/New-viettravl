@@ -4,8 +4,8 @@ import TourCard from "@/src/components/TourCard";
 import { Tour } from "@/src/lib/types";
 
 async function getTours(): Promise<Tour[]> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/tours`, {
-    // Cache revalidate on request in dev
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  const res = await fetch(`${base}/api/tours`, {
     next: { revalidate: 60 },
   });
   if (!res.ok) return [];

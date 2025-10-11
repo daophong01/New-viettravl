@@ -3,7 +3,8 @@ import Image from "next/image";
 import { Tour, Review } from "@/src/lib/types";
 
 async function getTour(id: string): Promise<Tour | null> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/tours/${id}`, {
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  const res = await fetch(`${base}/api/tours/${id}`, {
     next: { revalidate: 60 },
   });
   if (!res.ok) return null;
@@ -11,7 +12,8 @@ async function getTour(id: string): Promise<Tour | null> {
 }
 
 async function getReviews(): Promise<Review[]> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/reviews`, {
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  const res = await fetch(`${base}/api/reviews`, {
     next: { revalidate: 60 },
   });
   if (!res.ok) return [];
@@ -45,13 +47,18 @@ export default async function TourDetailPage({
         </p>
         <p className="text-sm leading-relaxed">{tour.description}</p>
         <div className="flex items-center gap-2 text-sm"><span>⭐ {tour.rating.toFixed(1)}</span></div>
-        {/* Booking */}
-        {/* Client booking form */}
+        {/* Booking + Payment */}
         {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
         {/* @ts-expect-error Server Component using client child is fine here */}
         {await (async () => {
           const { default: BookingForm } = await import("@/src/components/BookingForm");
-          return <BookingForm tourId={tour.id} />;
+          const { default: PaymentButton } = await import("@/src/components/PaymentButton");
+          return (
+            <div className="flex items-center gap-2 mt-4">
+              <BookingForm tourId={tour.id} />
+              <PaymentButton tourId={tour.id} title={tour.title} amount={tour.price} />
+            </div>
+          );
         })()}
       </div>
 
