@@ -6,6 +6,8 @@ export class LoginEvent extends Model {
   declare userId: number;
   declare ip: string | null;
   declare userAgent: string | null;
+  declare city: string | null;
+  declare country: string | null;
 }
 
 LoginEvent.init(
@@ -14,6 +16,8 @@ LoginEvent.init(
     userId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
     ip: { type: DataTypes.STRING, allowNull: true },
     userAgent: { type: DataTypes.STRING, allowNull: true },
+    city: { type: DataTypes.STRING, allowNull: true },
+    country: { type: DataTypes.STRING, allowNull: true },
   },
   { sequelize, modelName: "login_event" }
 );

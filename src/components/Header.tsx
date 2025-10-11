@@ -39,6 +39,7 @@ export default function Header() {
           {navLink("/about", "About")}
           {navLink("/contact", "Contact")}
           {user?.role === "admin" && <AdminMenu />}
+          {user && navLink("/user/security", "Bảo mật")}
         </nav>
 
         <div className="hidden md:flex items-center gap-3">

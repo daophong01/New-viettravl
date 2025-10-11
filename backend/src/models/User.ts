@@ -15,6 +15,7 @@ export class User extends Model {
   declare emailChangeExpires: Date | null;
   declare resetCode: string | null;
   declare resetExpires: Date | null;
+  declare logoutAllAt: Date | null;
 }
 
 User.init(
@@ -32,6 +33,7 @@ User.init(
     emailChangeExpires: { type: DataTypes.DATE, allowNull: true },
     resetCode: { type: DataTypes.STRING, allowNull: true },
     resetExpires: { type: DataTypes.DATE, allowNull: true },
+    logoutAllAt: { type: DataTypes.DATE, allowNull: true },
   },
   { sequelize, modelName: "user" }
 );

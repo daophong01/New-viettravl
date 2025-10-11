@@ -69,7 +69,21 @@ router.post("/login", async (req, res) => {
     (req.socket?.remoteAddress as string) ||
     null;
   const ua = (req.headers["user-agent"] as string) || null;
-  await LoginEvent.create({ userId: user.id, ip, userAgent: ua });
+
+  let city: string | null = null;
+  let country: string | null = null;
+  try {
+    if (ip && ip !== "::1" && ip !== "127.0.0.1") {
+      const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=city,country,status`);
+      const geo = await geoRes.json();
+      if (geo?.status === "success") {
+        city = geo.city || null;
+        country = geo.country || null;
+      }
+    }
+  } catch {}
+
+  await LoginEvent.create({ userId: user.id, ip, userAgent: ua, city, country });
 
   res.json({ user, token });
 });
@@ -82,6 +96,12 @@ router.get("/verify", async (req, res) => {
     const payload = jwt.verify(token, process.env.JWT_SECRET || "supersecret") as any;
     const user = await User.findByPk(payload.id);
     if (!user) return res.status(401).json({ error: "Invalid token" });
+    // logout-all check: reject tokens issued before logoutAllAt
+    if (user.logoutAllAt) {
+      const iatSec = (payload.iat as number) || 0;
+      const logoutSec = Math.floor(new Date(user.logoutAllAt).getTime() / 1000);
+      if (iatSec < logoutSec) return res.status(401).json({ error: "Session expired" });
+    }
     res.json({ ok: true, user: { id: user.id, role: user.role, email: user.email, name: user.name, avatar: user.avatar } });
   } catch {
     return res.status(401).json({ error: "Invalid token" });
@@ -196,6 +216,13 @@ router.post("/reset-password", async (req, res) => {
   }
   if (code !== user.resetCode) return res.status(400).json({ error: "Invalid code" });
   await user.update({ password: newPassword, resetCode: null, resetExpires: null });
+  res.json({ ok: true });
+});
+
+router.post("/logout-all", requireAuth, async (req: any, res) => {
+  const user = await User.findByPk(req.user.id);
+  if (!user) return res.status(404).json({ error: "Not found" });
+  await user.update({ logoutAllAt: new Date() });
   res.json({ ok: true });
 });
 
