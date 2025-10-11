@@ -55,11 +55,22 @@ router.post("/register", async (req, res) => {
   res.json({ user, token });
 });
 
+import { LoginEvent } from "../models/LoginEvent.js";
+
 router.post("/login", async (req, res) => {
   const { email, password } = req.body || {};
   const user = await User.findOne({ where: { email } });
   if (!user || user.password !== password) return res.status(401).json({ error: "Invalid credentials" });
   const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET || "supersecret");
+
+  // record login event
+  const ip =
+    (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
+    (req.socket?.remoteAddress as string) ||
+    null;
+  const ua = (req.headers["user-agent"] as string) || null;
+  await LoginEvent.create({ userId: user.id, ip, userAgent: ua });
+
   res.json({ user, token });
 });
 
@@ -75,6 +86,16 @@ router.get("/verify", async (req, res) => {
   } catch {
     return res.status(401).json({ error: "Invalid token" });
   }
+});
+
+// Security: list login events for current user
+router.get("/logins", requireAuth, async (req: any, res) => {
+  const items = await LoginEvent.findAll({
+    where: { userId: req.user.id },
+    order: [["id", "DESC"]],
+    limit: 50,
+  });
+  res.json(items);
 });
 
 // Update profile (name, avatar url/publicId)

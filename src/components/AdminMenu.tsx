@@ -3,11 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/src/store/auth";
 
 export default function AdminMenu() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
+  const user = useAuth((s) => s.user);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -32,12 +34,17 @@ export default function AdminMenu() {
   return (
     <div ref={ref} className="relative">
       <button
-        className="px-3 py-2 rounded border hover:bg-black/5"
+        className="px-3 py-2 rounded border hover:bg-black/5 flex items-center gap-2"
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        Admin
+        {user?.avatar ? (
+          <img src={user.avatar} alt="avatar" className="w-6 h-6 rounded-full object-cover border" />
+        ) : (
+          <div className="w-6 h-6 rounded-full border bg-black/5" />
+        )}
+        <span>Admin</span>
       </button>
       {open && (
         <div
