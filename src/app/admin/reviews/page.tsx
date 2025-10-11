@@ -1,14 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/src/store/auth";
 import { Review, Tour, User } from "@/src/lib/types";
+import ConfirmDialog from "@/src/components/ConfirmDialog";
+import { useToast } from "@/src/store/toast";
 
 export default function AdminReviewsPage() {
   const token = useAuth((s) => s.token);
+  const push = useToast((s) => s.push);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [tours, setTours] = useState<Tour[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [confirmId, setConfirmId] = useState<number | null>(null);
+
+  // Filters
+  const [tourId, setTourId] = useState<number | "all">("all");
+  const [userQuery, setUserQuery] = useState("");
+  const [ratingMin, setRatingMin] = useState<number | undefined>(undefined);
+  const [ratingMax, setRatingMax] = useState<number | undefined>(undefined);
 
   const load = async () => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -30,14 +40,83 @@ export default function AdminReviewsPage() {
   const tourTitle = (id: number) => tours.find((t) => t.id === id)?.title || `#${id}`;
   const userEmail = (id: number) => users.find((u) => u.id === id)?.email || `#${id}`;
 
+  const filtered = useMemo(() => {
+    return reviews
+      .filter((r) => (tourId === "all" ? true : r.tourId === tourId))
+      .filter((r) =>
+        userQuery
+          ? userEmail(r.userId).toLowerCase().includes(userQuery.toLowerCase())
+          : true
+      )
+      .filter((r) => (ratingMin != null ? r.rating >= ratingMin : true))
+      .filter((r) => (ratingMax != null ? r.rating <= ratingMax : true));
+  }, [reviews, tourId, userQuery, ratingMin, ratingMax, users]);
+
+  const deleteReviewReq = async (id: number) => {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    const res = await fetch(`${base}/api/admin/reviews/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token || ""}` },
+    });
+    if (res.ok) {
+      push({ text: "Đã xóa review", type: "success" });
+      await load();
+    } else {
+      push({ text: "Xóa review thất bại", type: "error" });
+    }
+  };
+
   return (
     <div className="py-8 space-y-6">
       <h1 className="text-2xl font-bold">Quản lý Reviews</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <select
+          className="border rounded px-3 py-2 w-full"
+          value={tourId === "all" ? "" : tourId}
+          onChange={(e) => {
+            const v = e.target.value;
+            setTourId(v ? Number(v) : "all");
+          }}
+        >
+          <option value="">Tất cả tours</option>
+          {tours.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.title}
+            </option>
+          ))}
+        </select>
+        <input
+          className="border rounded px-3 py-2 w-full"
+          placeholder="Tìm theo email người dùng..."
+          value={userQuery}
+          onChange={(e) => setUserQuery(e.target.value)}
+        />
+        <input
+          className="border rounded px-3 py-2 w-full"
+          placeholder="Rating min"
+          type="number"
+          min={1}
+          max={5}
+          value={ratingMin ?? ""}
+          onChange={(e) => setRatingMin(e.target.value ? Number(e.target.value) : undefined)}
+        />
+        <input
+          className="border rounded px-3 py-2 w-full"
+          placeholder="Rating max"
+          type="number"
+          min={1}
+          max={5}
+          value={ratingMax ?? ""}
+          onChange={(e) => setRatingMax(e.target.value ? Number(e.target.value) : undefined)}
+        />
+      </div>
+
       <div className="space-y-2">
-        {reviews.length === 0 ? (
-          <p className="text-sm">Chưa có reviews</p>
+        {filtered.length === 0 ? (
+          <p className="text-sm">Không có review phù hợp</p>
         ) : (
-          reviews.map((r) => (
+          filtered.map((r) => (
             <div key={r.id} className="border rounded p-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm">⭐ {r.rating}</span>
@@ -48,10 +127,31 @@ export default function AdminReviewsPage() {
               <p className="text-sm">Người dùng: {userEmail(r.userId)}</p>
               <p className="text-sm">Tour: {tourTitle(r.tourId)}</p>
               <p className="text-sm mt-2">{r.comment}</p>
+              <div className="mt-2">
+                <button
+                  onClick={() => setConfirmId(r.id)}
+                  className="px-3 py-1 rounded border hover:bg-red-100 text-sm"
+                >
+                  Xóa review
+                </button>
+              </div>
             </div>
           ))
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmId !== null}
+        title="Xóa review?"
+        description="Hành động này không thể hoàn tác."
+        confirmText="Xóa"
+        cancelText="Hủy"
+        onConfirm={() => {
+          if (confirmId) deleteReviewReq(confirmId);
+          setConfirmId(null);
+        }}
+        onCancel={() => setConfirmId(null)}
+      />
     </div>
   );
 }
