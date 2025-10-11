@@ -7,6 +7,7 @@ export class User extends Model {
   declare email: string;
   declare password: string;
   declare role: "user" | "admin";
+  declare status: "active" | "blocked";
 }
 
 User.init(
@@ -16,6 +17,7 @@ User.init(
     email: { type: DataTypes.STRING, allowNull: false, unique: true },
     password: { type: DataTypes.STRING, allowNull: false },
     role: { type: DataTypes.ENUM("user", "admin"), allowNull: false, defaultValue: "user" },
+    status: { type: DataTypes.ENUM("active", "blocked"), allowNull: false, defaultValue: "active" },
   },
   { sequelize, modelName: "user" }
 );

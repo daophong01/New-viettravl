@@ -98,7 +98,11 @@ export default function Header() {
             {navLink("/contact", "Contact")}
             {user?.role === "admin" && (
               <>
-                {navAdmin")}
+                {navLink("/admin/dashboard", "Admin Dashboard")}
+                {navLink("/admin/users", "Admin Users")}
+                {navLink("/admin/tours", "Admin Tours")}
+              </>
+            )}
           </div>
           <div className="flex gap-2 mt-2">
             {user ? (
