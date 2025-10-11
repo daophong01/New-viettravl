@@ -74,6 +74,22 @@ export default function AdminMenu() {
               Support
             </Link>
             <div className="h-px bg-black/10 dark:bg-white/15 my-1" />
+            <Link href="/admin/revenue" className="px-2 py-1 rounded hover:bg-black/5">
+              Doanh thu
+            </Link>
+            <Link href="/admin/top-bookings" className="px-2 py-1 rounded hover:bg-black/5">
+              Top đặt
+            </Link>
+            <Link href="/admin/top-revenue" className="px-2 py-1 rounded hover:bg-black/5">
+              Top doanh thu
+            </Link>
+            <Link href="/admin/top-favorites" className="px-2 py-1 rounded hover:bg-black/5">
+              Top yêu thích
+            </Link>
+            <Link href="/admin/analytics" className="px-2 py-1 rounded hover:bg-black/5">
+              Analytics
+            </Link>
+            <div className="h-px bg-black/10 dark:bg-white/15 my-1" />
             <Link href="/user/profile" className="px-2 py-1 rounded hover:bg-black/5">
               Hồ sơ của tôi
             </Link>

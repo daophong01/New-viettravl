@@ -242,4 +242,70 @@ router.get("/top-revenue", requireAuth, async (req, res) => {
   res.json(rows);
 });
 
+router.get("/export/top-bookings", requireAuth, async (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
+  const format = (req.query.format as string) || "csv";
+  const rows = await Tour.findAll({
+    attributes: { include: [[fn("COUNT", col("bookings.id")), "bookCount"]] },
+    include: [{ model: Booking, attributes: [], required: false }],
+    group: ["tour.id"],
+    order: [[literal("bookCount"), "DESC"]],
+    subQuery: false,
+  });
+  const plain = rows.map((r: any) => ({ id: r.id, title: r.title, bookCount: Number(r.get("bookCount") || 0) }));
+
+  if (format === "xlsx") {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("top_bookings");
+    const headers = ["id", "title", "bookCount"];
+    sheet.addRow(headers);
+    for (const obj of plain) sheet.addRow(headers.map((h) => (obj as any)[h] ?? ""));
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", "attachment; filename=top_bookings.xlsx");
+    await workbook.xlsx.write(res as any);
+    res.end();
+  } else {
+    const headers = ["id", "title", "bookCount"];
+    const lines = [headers.join(",")];
+    for (const obj of plain) lines.push(headers.map((h) => JSON.stringify((obj as any)[h] ?? "")).join(","));
+    const csv = lines.join("\n");
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", "attachment; filename=top_bookings.csv");
+    res.send(csv);
+  }
+});
+
+router.get("/export/top-revenue", requireAuth, async (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
+  const format = (req.query.format as string) || "csv";
+  const rows = await Tour.findAll({
+    attributes: { include: [[fn("SUM", col("payments.amount")), "revenueSum"]] },
+    include: [{ model: Payment, attributes: [], required: false, where: { status: "succeeded" } }],
+    group: ["tour.id"],
+    order: [[literal("revenueSum"), "DESC"]],
+    subQuery: false,
+  });
+  const plain = rows.map((r: any) => ({ id: r.id, title: r.title, revenueSum: Number(r.get("revenueSum") || 0) }));
+
+  if (format === "xlsx") {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("top_revenue");
+    const headers = ["id", "title", "revenueSum"];
+    sheet.addRow(headers);
+    for (const obj of plain) sheet.addRow(headers.map((h) => (obj as any)[h] ?? ""));
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", "attachment; filename=top_revenue.xlsx");
+    await workbook.xlsx.write(res as any);
+    res.end();
+  } else {
+    const headers = ["id", "title", "revenueSum"];
+    const lines = [headers.join(",")];
+    for (const obj of plain) lines.push(headers.map((h) => JSON.stringify((obj as any)[h] ?? "")).join(","));
+    const csv = lines.join("\n");
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", "attachment; filename=top_revenue.csv");
+    res.send(csv);
+  }
+});
+
 export default router;
