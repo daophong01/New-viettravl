@@ -69,4 +69,59 @@ router.post("/change-password", requireAuth, async (req: any, res) => {
   res.json({ ok: true });
 });
 
+// Request email change (send code)
+router.post("/request-email-change", requireAuth, async (req: any, res) => {
+  const user = await User.findByPk(req.user.id);
+  if (!user) return res.status(404).json({ error: "Not found" });
+  const { newEmail } = req.body || {};
+  if (!newEmail) return res.status(400).json({ error: "Missing newEmail" });
+  const exists = await User.findOne({ where: { email: newEmail } });
+  if (exists) return res.status(409).json({ error: "Email exists" });
+  const code = Math.random().toString(36).slice(2, 8);
+  const expires = new Date(Date.now() + 15 * 60 * 1000);
+  await user.update({ pendingEmail: newEmail, emailChangeCode: code, emailChangeExpires: expires });
+  res.json({ ok: true, code }); // In real app, send via email
+});
+
+// Confirm email change
+router.post("/confirm-email-change", requireAuth, async (req: any, res) => {
+  const user = await User.findByPk(req.user.id);
+  if (!user) return res.status(404).json({ error: "Not found" });
+  const { code } = req.body || {};
+  if (!code) return res.status(400).json({ error: "Missing code" });
+  if (!user.emailChangeCode || !user.emailChangeExpires || user.emailChangeExpires < new Date()) {
+    return res.status(400).json({ error: "Code expired" });
+  }
+  if (code !== user.emailChangeCode) return res.status(400).json({ error: "Invalid code" });
+  if (!user.pendingEmail) return res.status(400).json({ error: "No pending email" });
+  await user.update({ email: user.pendingEmail, pendingEmail: null, emailChangeCode: null, emailChangeExpires: null });
+  res.json({ ok: true, email: user.email });
+});
+
+// Forgot password: request reset
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body || {};
+  if (!email) return res.status(400).json({ error: "Missing email" });
+  const user = await User.findOne({ where: { email } });
+  if (!user) return res.json({ ok: true }); // do not reveal existence
+  const code = Math.random().toString(36).slice(2, 8);
+  const expires = new Date(Date.now() + 15 * 60 * 1000);
+  await user.update({ resetCode: code, resetExpires: expires });
+  res.json({ ok: true, code }); // In real app, send via email
+});
+
+// Reset password with code
+router.post("/reset-password", async (req, res) => {
+  const { email, code, newPassword } = req.body || {};
+  if (!email || !code || !newPassword) return res.status(400).json({ error: "Missing fields" });
+  const user = await User.findOne({ where: { email } });
+  if (!user) return res.status(400).json({ error: "Invalid request" });
+  if (!user.resetCode || !user.resetExpires || user.resetExpires < new Date()) {
+    return res.status(400).json({ error: "Code expired" });
+  }
+  if (code !== user.resetCode) return res.status(400).json({ error: "Invalid code" });
+  await user.update({ password: newPassword, resetCode: null, resetExpires: null });
+  res.json({ ok: true });
+});
+
 export default router;

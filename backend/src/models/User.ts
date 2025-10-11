@@ -10,6 +10,11 @@ export class User extends Model {
   declare status: "active" | "blocked";
   declare avatar: string | null;
   declare avatarPublicId: string | null;
+  declare pendingEmail: string | null;
+  declare emailChangeCode: string | null;
+  declare emailChangeExpires: Date | null;
+  declare resetCode: string | null;
+  declare resetExpires: Date | null;
 }
 
 User.init(
@@ -22,6 +27,11 @@ User.init(
     status: { type: DataTypes.ENUM("active", "blocked"), allowNull: false, defaultValue: "active" },
     avatar: { type: DataTypes.STRING, allowNull: true },
     avatarPublicId: { type: DataTypes.STRING, allowNull: true },
+    pendingEmail: { type: DataTypes.STRING, allowNull: true },
+    emailChangeCode: { type: DataTypes.STRING, allowNull: true },
+    emailChangeExpires: { type: DataTypes.DATE, allowNull: true },
+    resetCode: { type: DataTypes.STRING, allowNull: true },
+    resetExpires: { type: DataTypes.DATE, allowNull: true },
   },
   { sequelize, modelName: "user" }
 );

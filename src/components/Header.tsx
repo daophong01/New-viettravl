@@ -41,9 +41,18 @@ export default function Header() {
           {user?.role === "admin" && <AdminMenu />}
         </nav>
 
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden md:flex items-center gap-3">
           {user ? (
             <>
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt="avatar"
+                  className="w-8 h-8 rounded-full object-cover border"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full border bg-black/5" />
+              )}
               <span className="text-sm">Xin chào, {user.name}</span>
               <Link
                 href="/user/dashboard"
@@ -120,6 +129,12 @@ export default function Header() {
                   className="px-3 py-2 rounded border border-black/10 dark:border-white/15 hover:bg-black/5 w-full text-center"
                 >
                   Dashboard
+                </Link>
+                <Link
+                  href="/user/settings"
+                  className="px-3 py-2 rounded border border-black/10 dark:border-white/15 hover:bg-black/5 w-full text-center"
+                >
+                  Cài đặt
                 </Link>
                 <button
                   onClick={() => logout()}
