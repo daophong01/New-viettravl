@@ -100,6 +100,9 @@ export default function Header() {
                 {navLink("/admin/dashboard", "Admin Dashboard")}
                 {navLink("/admin/users", "Admin Users")}
                 {navLink("/admin/tours", "Admin Tours")}
+                {navLink("/admin/bookings", "Admin Bookings")}
+                {navLink("/admin/reviews", "Admin Reviews")}
+                {navLink("/admin/payments", "Admin Payments")}
               </>
             )}
           </div>
