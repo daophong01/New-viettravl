@@ -25,4 +25,15 @@ router.get("/admin/messages", requireAuth, async (req, res) => {
   res.json(items);
 });
 
+// Admin update status
+router.put("/admin/messages/:id", requireAuth, async (req, res) => {
+  if ((req as any).user?.role !== "admin") return res.status(403).json({ error: "Forbidden" });
+  const item = await SupportMessage.findByPk(req.params.id);
+  if (!item) return res.status(404).json({ error: "Not found" });
+  const { status } = req.body || {};
+  if (!["new", "resolved"].includes(status)) return res.status(400).json({ error: "Invalid status" });
+  await item.update({ status });
+  res.json(item);
+});
+
 export default router;

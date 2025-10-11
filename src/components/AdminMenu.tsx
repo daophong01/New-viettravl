@@ -42,7 +42,7 @@ export default function AdminMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-48 rounded border bg-background shadow"
+          className="absolute right-0 mt-2 w-56 rounded border bg-background shadow"
         >
           <div className="flex flex-col p-2">
             <Link href="/admin/dashboard" className="px-2 py-1 rounded hover:bg-black/5">
@@ -59,6 +59,12 @@ export default function AdminMenu() {
             </Link>
             <Link href="/admin/reviews" className="px-2 py-1 rounded hover:bg-black/5">
               Reviews
+            </Link>
+            <Link href="/admin/payments" className="px-2 py-1 rounded hover:bg-black/5">
+              Payments
+            </Link>
+            <Link href="/admin/support" className="px-2 py-1 rounded hover:bg-black/5">
+              Support
             </Link>
           </div>
         </div>

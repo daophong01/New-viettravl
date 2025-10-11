@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import { User, Tour, Booking, Review, Payment } from "../models/index.js";
+import ExcelJS from "exceljs";
 
 const router = Router();
 
@@ -108,10 +109,11 @@ router.get("/payments", requireAuth, async (req, res) => {
   res.json({ items: rows, total: count, page, pageSize });
 });
 
-// Exports CSV
+// Export CSV or Excel
 router.get("/export/:type", requireAuth, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
   const type = (req.params.type || "").toLowerCase();
+  const format = (req.query.format as string) || "csv";
   let rows: any[] = [];
 
   if (type === "payments") {
@@ -124,21 +126,31 @@ router.get("/export/:type", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "Invalid type" });
   }
 
-  const toCSV = (arr: any[]) => {
-    if (arr.length === 0) return "";
-    const headers = Object.keys(arr[0].toJSON ? arr[0].toJSON() : arr[0]);
+  const plain = rows.map((r) => (r.toJSON ? r.toJSON() : r));
+
+  if (format === "xlsx") {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet(type);
+    const headers = Object.keys(plain[0] || {});
+    sheet.addRow(headers);
+    for (const obj of plain) {
+      sheet.addRow(headers.map((h) => obj[h] ?? ""));
+    }
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename=${type}.xlsx`);
+    await workbook.xlsx.write(res as any);
+    res.end();
+  } else {
+    const headers = Object.keys(plain[0] || {});
     const lines = [headers.join(",")];
-    for (const r of arr) {
-      const obj = r.toJSON ? r.toJSON() : r;
+    for (const obj of plain) {
       lines.push(headers.map((h) => JSON.stringify(obj[h] ?? "")).join(","));
     }
-    return lines.join("\n");
-  };
-
-  const csv = toCSV(rows);
-  res.setHeader("Content-Type", "text/csv; charset=utf-8");
-  res.setHeader("Content-Disposition", `attachment; filename=${type}.csv`);
-  res.send(csv);
+    const csv = lines.join("\n");
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename=${type}.csv`);
+    res.send(csv);
+  }
 });
 
 export default router;
