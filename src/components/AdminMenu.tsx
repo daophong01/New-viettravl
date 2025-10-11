@@ -57,6 +57,9 @@ export default function AdminMenu() {
             <Link href="/admin/bookings" className="px-2 py-1 rounded hover:bg-black/5">
               Bookings
             </Link>
+            <Link href="/admin/reviews" className="px-2 py-1 rounded hover:bg-black/5">
+              Reviews
+            </Link>
           </div>
         </div>
       )}

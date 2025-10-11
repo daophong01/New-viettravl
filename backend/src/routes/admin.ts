@@ -32,4 +32,10 @@ router.get("/bookings", requireAuth, async (req, res) => {
   res.json(items);
 });
 
+router.get("/reviews", requireAuth, async (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
+  const items = await Review.findAll({ order: [["id", "DESC"]] });
+  res.json(items);
+});
+
 export default router;
