@@ -8,9 +8,15 @@ router.get("/", async (req, res) => {
   const page = Math.max(1, Number(req.query.page) || 1);
   const pageSize = Math.min(50, Math.max(1, Number(req.query.pageSize) || 100));
   const offset = (page - 1) * pageSize;
+  const sort = (req.query.sort as string) || "id_asc";
+
+  let order: any = [["id", "ASC"]];
+  if (sort === "price_asc") order = [["price", "ASC"]];
+  else if (sort === "price_desc") order = [["price", "DESC"]];
+  else if (sort === "rating_desc") order = [["rating", "DESC"]];
 
   const { rows, count } = await Tour.findAndCountAll({
-    order: [["id", "ASC"]],
+    order,
     offset,
     limit: pageSize,
   });

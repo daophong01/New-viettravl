@@ -6,10 +6,12 @@ export default function ImageUpload({
   onUploaded,
   folder = "travelgo/tours",
   maxSizeMB = 5,
+  publicId,
 }: {
   onUploaded: (url: string) => void;
   folder?: string;
   maxSizeMB?: number;
+  publicId?: string;
 }) {
   const [loading, setLoading] = useState(false);
 
@@ -20,14 +22,16 @@ export default function ImageUpload({
     }
     setLoading(true);
     try {
-      // Get signed params from backend
       const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-      const signRes = await fetch(`${base}/api/upload/sign?folder=${encodeURIComponent(folder)}`);
+      const pid = publicId || `tour_${Date.now()}`;
+      const signRes = await fetch(
+        `${base}/api/upload/sign?folder=${encodeURIComponent(folder)}&public_id=${encodeURIComponent(pid)}`
+      );
       if (!signRes.ok) {
         setLoading(false);
         return;
       }
-      const { cloudName, apiKey, timestamp, signature, folder: signedFolder } = await signRes.json();
+      const { cloudName, apiKey, timestamp, signature, folder: signedFolder, public_id } = await signRes.json();
 
       const form = new FormData();
       form.append("file", file);
@@ -35,6 +39,7 @@ export default function ImageUpload({
       form.append("timestamp", String(timestamp));
       form.append("signature", signature);
       if (signedFolder) form.append("folder", signedFolder);
+      if (public_id) form.append("public_id", public_id);
 
       const uploadRes = await fetch(
         `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,

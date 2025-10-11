@@ -14,11 +14,12 @@ router.get("/sign", async (req, res) => {
 
   const timestamp = Math.floor(Date.now() / 1000);
   const folder = (req.query.folder as string) || "travelgo";
+  const public_id = (req.query.public_id as string) || undefined;
 
-  const signature = cloudinary.v2.utils.api_sign_request(
-    { timestamp, folder },
-    API_SECRET
-  );
+  const paramsToSign: Record<string, any> = { timestamp, folder };
+  if (public_id) paramsToSign.public_id = public_id;
+
+  const signature = cloudinary.v2.utils.api_sign_request(paramsToSign, API_SECRET);
 
   res.json({
     cloudName: CLOUD_NAME,
@@ -26,6 +27,7 @@ router.get("/sign", async (req, res) => {
     timestamp,
     signature,
     folder,
+    public_id: public_id || null,
   });
 });
 

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -6,6 +7,25 @@ import SkeletonCard from "@/src/components/SkeletonCard";
 import { Tour } from "@/src/lib/types";
 import SearchBar from "@/src/components/SearchBar";
 import FilterBox from "@/src/components/FilterBox";
+
+export const metadata: Metadata = {
+  title: "Tours | TravelGo",
+  description: "Danh sách tour du lịch hấp dẫn trên TravelGo.",
+  alternates: { canonical: (process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000") + "/tours" },
+  openGraph: {
+    title: "Tours | TravelGo",
+    description: "Danh sách tour du lịch hấp dẫn trên TravelGo.",
+    url: (process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000") + "/tours",
+    images: [{ url: "/next.svg", alt: "TravelGo" }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Tours | TravelGo",
+    description: "Danh sách tour du lịch hấp dẫn trên TravelGo.",
+    images: ["/next.svg"],
+  },
+};
 
 export default function ToursPage() {
   const [tours, setTours] = useState<Tour[]>([]);
@@ -21,7 +41,7 @@ export default function ToursPage() {
   const fetchPage = async (p: number) => {
     setLoading(true);
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-    const res = await fetch(`${base}/api/tours?page=${p}&pageSize=${pageSize}`);
+    const res = await fetch(`${base}/api/tours?page=${p}&pageSize=${pageSize}&sort=${sort}`);
     if (res.ok) {
       const data = await res.json();
       const items = Array.isArray(data) ? data : data.items || [];
@@ -34,7 +54,7 @@ export default function ToursPage() {
   useEffect(() => {
     fetchPage(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, sort]);
 
   const filtered = useMemo(() => {
     let data = tours
@@ -45,6 +65,7 @@ export default function ToursPage() {
         location ? t.location.toLowerCase().includes(location.toLowerCase()) : true
       )
       .filter((t) => (maxPrice ? t.price <= maxPrice : true));
+    // client-side sort already matched with server sort, keep for UX
     switch (sort) {
       case "price_asc":
         data = data.sort((a, b) => a.price - b.price);
