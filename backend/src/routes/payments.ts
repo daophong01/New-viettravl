@@ -13,6 +13,7 @@ router.post("/checkout", requireAuth, async (req, res) => {
     const { tourId, title, amount } = req.body || {};
     if (!title || !amount) return res.status(400).json({ error: "Missing fields" });
 
+    const base = process.env.FRONTEND_URL || "http://localhost:3000";
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
@@ -26,8 +27,8 @@ router.post("/checkout", requireAuth, async (req, res) => {
           quantity: 1,
         },
       ],
-      success_url: (process.env.FRONTEND_URL || "http://localhost:3000") + `/tours/${tourId}?status=success`,
-      cancel_url: (process.env.FRONTEND_URL || "http://localhost:3000") + `/tours/${tourId}?status=cancel`,
+      success_url: `${base}/payments/result?status=success&tourId=${encodeURIComponent(tourId)}`,
+      cancel_url: `${base}/payments/result?status=cancel&tourId=${encodeURIComponent(tourId)}`,
     });
 
     res.json({ url: session.url });
