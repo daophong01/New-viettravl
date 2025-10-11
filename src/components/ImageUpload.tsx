@@ -4,28 +4,37 @@ import { useState } from "react";
 
 export default function ImageUpload({
   onUploaded,
+  folder = "travelgo/tours",
+  maxSizeMB = 5,
 }: {
   onUploaded: (url: string) => void;
+  folder?: string;
+  maxSizeMB?: number;
 }) {
   const [loading, setLoading] = useState(false);
 
   const handleFile = async (file: File) => {
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      alert(`Ảnh vượt quá ${maxSizeMB}MB. Vui lòng chọn ảnh khác.`);
+      return;
+    }
     setLoading(true);
     try {
       // Get signed params from backend
       const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-      const signRes = await fetch(`${base}/api/upload/sign`);
+      const signRes = await fetch(`${base}/api/upload/sign?folder=${encodeURIComponent(folder)}`);
       if (!signRes.ok) {
         setLoading(false);
         return;
       }
-      const { cloudName, apiKey, timestamp, signature } = await signRes.json();
+      const { cloudName, apiKey, timestamp, signature, folder: signedFolder } = await signRes.json();
 
       const form = new FormData();
       form.append("file", file);
       form.append("api_key", apiKey);
       form.append("timestamp", String(timestamp));
       form.append("signature", signature);
+      if (signedFolder) form.append("folder", signedFolder);
 
       const uploadRes = await fetch(
         `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,

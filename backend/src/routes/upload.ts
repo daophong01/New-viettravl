@@ -3,7 +3,7 @@ import cloudinary from "cloudinary";
 
 const router = Router();
 
-router.get("/sign", async (_req, res) => {
+router.get("/sign", async (req, res) => {
   const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
   const API_KEY = process.env.CLOUDINARY_API_KEY;
   const API_SECRET = process.env.CLOUDINARY_API_SECRET;
@@ -13,9 +13,10 @@ router.get("/sign", async (_req, res) => {
   }
 
   const timestamp = Math.floor(Date.now() / 1000);
-  // You can add more params to sign, e.g. folder
+  const folder = (req.query.folder as string) || "travelgo";
+
   const signature = cloudinary.v2.utils.api_sign_request(
-    { timestamp },
+    { timestamp, folder },
     API_SECRET
   );
 
@@ -24,6 +25,7 @@ router.get("/sign", async (_req, res) => {
     apiKey: API_KEY,
     timestamp,
     signature,
+    folder,
   });
 });
 
