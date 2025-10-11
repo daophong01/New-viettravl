@@ -26,6 +26,7 @@ export default function UserFavoritesPage() {
       headers: { Authorization: `Bearer ${token || ""}` },
     });
     if (res.ok) {
+      window.dispatchEvent(new CustomEvent("fav-changed", { detail: { delta: -1 } }));
       push({ text: "Đã bỏ khỏi yêu thích", type: "success" });
       await load();
     } else {

@@ -35,6 +35,13 @@ export default function Header() {
       }
     };
     fetchFavs();
+
+    const onFavChanged = (e: any) => {
+      const delta = (e?.detail?.delta as number) || 0;
+      setFavoritesCount((c) => Math.max(0, c + delta));
+    };
+    window.addEventListener("fav-changed", onFavChanged as any);
+    return () => window.removeEventListener("fav-changed", onFavChanged as any);
   }, [token]);
 
   const navLink = (href: string, label: string) => {

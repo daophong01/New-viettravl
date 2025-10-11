@@ -96,16 +96,18 @@ export default async function TourDetailPage({
         </p>
         <p className="text-sm leading-relaxed">{tour.description}</p>
         <div className="flex items-center gap-2 text-sm"><span>⭐ {tour.rating.toFixed(1)}</span></div>
-        {/* Booking + Payment */}
+        {/* Booking + Payment + Favorite */}
         {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
         {/* @ts-expect-error Server Component using client child is fine here */}
         {await (async () => {
           const { default: BookingForm } = await import("@/src/components/BookingForm");
           const { default: PaymentButton } = await import("@/src/components/PaymentButton");
+          const { default: FavoriteButton } = await import("@/src/components/FavoriteButton");
           return (
             <div className="flex items-center gap-2 mt-4">
               <BookingForm tourId={tour.id} />
               <PaymentButton tourId={tour.id} title={tour.title} amount={tour.price} />
+              <FavoriteButton tourId={tour.id} />
             </div>
           );
         })()}

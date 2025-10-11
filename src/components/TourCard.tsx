@@ -32,8 +32,11 @@ export default function TourCard({ tour, isFavorited }: { tour: Tour; isFavorite
         body: JSON.stringify({ tourId: tour.id }),
       });
       if (res.ok) {
+        const before = favorited;
         const data = await res.json();
         setFavorited(data.favorited);
+        const delta = data.favorited === true && !before ? 1 : data.favorited === false && before ? -1 : 0;
+        window.dispatchEvent(new CustomEvent("fav-changed", { detail: { delta } }));
         push({
           text: data.favorited ? "Đã thêm vào yêu thích" : "Đã bỏ khỏi yêu thích",
           type: "success",
