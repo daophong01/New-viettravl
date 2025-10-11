@@ -7,12 +7,16 @@ import tourRoutes from "./routes/tours.js";
 import bookingRoutes from "./routes/bookings.js";
 import reviewRoutes from "./routes/reviews.js";
 import paymentRoutes from "./routes/payments.js";
+import vnpayRoutes from "./routes/payments_vnpay.js";
+import momoRoutes from "./routes/payments_momo.js";
+import paypalRoutes from "./routes/payments_paypal.js";
 import userRoutes from "./routes/users.js";
 import adminRoutes from "./routes/admin.js";
 import uploadRoutes from "./routes/upload.js";
 import supportRoutes from "./routes/support.js";
 import favoritesRoutes from "./routes/favorites.js";
 import watchlaterRoutes from "./routes/watchlater.js";
+import eventsRoutes, { broadcast } from "./routes/events.js";
 import { User } from "./models/User.js";
 
 dotenv.config();
@@ -42,12 +46,16 @@ app.use("/api/tours", tourRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/payments/vnpay", vnpayRoutes);
+app.use("/api/payments/momo", momoRoutes);
+app.use("/api/payments/paypal", paypalRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/favorites", favoritesRoutes);
 app.use("/api/watchlater", watchlaterRoutes);
+app.use("/api/admin/events", eventsRoutes);
 
 const PORT = process.env.PORT || 4000;
 

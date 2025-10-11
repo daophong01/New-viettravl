@@ -16,7 +16,7 @@ function hasRole(req: any, roles: string[]) {
 }
 
 router.get("/dashboard", requireAuth, async (req, res) => {
-  if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
+  if (!hasRole(req, ["admin", "superadmin"])) return res.status(403).json({ error: "Forbidden" });
 
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -115,7 +115,7 @@ router.get("/bookings", requireAuth, async (req, res) => {
 
 // Update booking status/paymentStatus/departureDate
 router.post("/bookings/:id/status", requireAuth, async (req, res) => {
-  if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
+  if (!hasRole(req, ["admin", "superadmin", "tourmanager"])) return res.status(403).json({ error: "Forbidden" });
   const id = Number(req.params.id);
   const { status, paymentStatus, departureDate } = req.body || {};
   const booking = await Booking.findByPk(id);
@@ -125,11 +125,29 @@ router.post("/bookings/:id/status", requireAuth, async (req, res) => {
   if (paymentStatus) patch.paymentStatus = paymentStatus;
   if (departureDate) patch.departureDate = departureDate;
   await booking.update(patch);
+
+  // Send email on confirm
+  if (status === "confirmed") {
+    try {
+      const user = await User.findByPk(booking.userId);
+      const tour = await Tour.findByPk(booking.tourId);
+      if (user?.email) {
+        const msg = `Đơn đặt tour của bạn đã được xác nhận.\nTour: ${tour?.title || booking.tourId}\nNgày khởi hành: ${booking.departureDate ? new Date(booking.departureDate).toLocaleDateString("vi-VN") : "—"}`;
+        // simple email using existing helper path via dynamic import to avoid cycle
+        const mod = await import("./auth.js");
+        const sendEmail = (mod as any).default?.sendEmail || (mod as any).sendEmail;
+        if (typeof sendEmail === "function") {
+          await sendEmail(user.email, "Xác nhận đơn đặt tour", msg);
+        }
+      }
+    } catch {}
+  }
+
   res.json(booking);
 });
 
 router.get("/reviews", requireAuth, async (req, res) => {
-  if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
+  if (!hasRole(req, ["admin", "superadmin", "supportstaff", "contenteditor"])) return res.status(403).json({ error: "Forbidden" });
 
   const page = Math.max(1, Number(req.query.page) || 1);
   const pageSize = Math.min(50, Math.max(1, Number(req.query.pageSize) || 10));
@@ -152,7 +170,7 @@ router.get("/reviews", requireAuth, async (req, res) => {
 });
 
 router.delete("/reviews/:id", requireAuth, async (req, res) => {
-  if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
+  if (!hasRole(req, ["admin", "superadmin", "supportstaff"])) return res.status(403).json({ error: "Forbidden" });
   const item = await Review.findByPk(req.params.id);
   if (!item) return res.status(404).json({ error: "Not found" });
   await item.destroy();
@@ -160,7 +178,7 @@ router.delete("/reviews/:id", requireAuth, async (req, res) => {
 });
 
 router.get("/payments", requireAuth, async (req, res) => {
-  if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
+  if (!hasRole(req, ["admin", "superadmin", "financeadmin"])) return res.status(403).json({ error: "Forbidden" });
 
   const page = Math.max(1, Number(req.query.page) || 1);
   const pageSize = Math.min(50, Math.max(1, Number(req.query.pageSize) || 10));

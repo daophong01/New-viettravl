@@ -10,6 +10,8 @@ export class Payment extends Model {
   declare tourId: number | null;
   declare customerEmail: string | null;
   declare paymentIntentId: string | null;
+  declare paymentMethod: "stripe" | "vnpay" | "momo" | "paypal" | null;
+  declare currency: string | null;
 }
 
 Payment.init(
@@ -22,6 +24,8 @@ Payment.init(
     tourId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
     customerEmail: { type: DataTypes.STRING, allowNull: true },
     paymentIntentId: { type: DataTypes.STRING, allowNull: true },
+    paymentMethod: { type: DataTypes.ENUM("stripe", "vnpay", "momo", "paypal"), allowNull: true },
+    currency: { type: DataTypes.STRING, allowNull: true },
   },
   { sequelize, modelName: "payment" }
 );

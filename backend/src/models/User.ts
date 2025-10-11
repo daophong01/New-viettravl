@@ -6,7 +6,7 @@ export class User extends Model {
   declare name: string;
   declare email: string;
   declare password: string;
-  declare role: "user" | "admin";
+  declare role: "user" | "admin" | "superadmin" | "tourmanager" | "financeadmin" | "supportstaff" | "contenteditor";
   declare status: "active" | "blocked";
   declare avatar: string | null;
   declare avatarPublicId: string | null;
@@ -24,7 +24,11 @@ User.init(
     name: { type: DataTypes.STRING, allowNull: false },
     email: { type: DataTypes.STRING, allowNull: false, unique: true },
     password: { type: DataTypes.STRING, allowNull: false },
-    role: { type: DataTypes.ENUM("user", "admin"), allowNull: false, defaultValue: "user" },
+    role: {
+      type: DataTypes.ENUM("user", "admin", "superadmin", "tourmanager", "financeadmin", "supportstaff", "contenteditor"),
+      allowNull: false,
+      defaultValue: "user",
+    },
     status: { type: DataTypes.ENUM("active", "blocked"), allowNull: false, defaultValue: "active" },
     avatar: { type: DataTypes.STRING, allowNull: true },
     avatarPublicId: { type: DataTypes.STRING, allowNull: true },
