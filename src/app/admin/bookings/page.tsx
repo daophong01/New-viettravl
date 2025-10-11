@@ -72,12 +72,20 @@ export default function AdminBookingsPage() {
             <option value="date_asc">Ngày cũ nhất</option>
           </select>
         </div>
-        <a
-          href={(process.env.NEXT_PUBLIC_API_BASE_URL || "") + "/api/admin/export/bookings"}
-          className="px-3 py-1 rounded bg-foreground text-background text-sm hover:opacity-90"
-        >
-          Xuất CSV
-        </a>
+        <div className="flex items-center gap-2">
+          <a
+            href={(process.env.NEXT_PUBLIC_API_BASE_URL || "") + "/api/admin/export/bookings"}
+            className="px-3 py-1 rounded bg-foreground text-background text-sm hover:opacity-90"
+          >
+            Xuất CSV
+          </a>
+          <a
+            href={(process.env.NEXT_PUBLIC_API_BASE_URL || "") + "/api/admin/export/bookings?format=xlsx"}
+            className="px-3 py-1 rounded border text-sm hover:bg-black/5"
+          >
+            Xuất Excel
+          </a>
+        </div>
       </div>
 
       <div className="space-y-2">

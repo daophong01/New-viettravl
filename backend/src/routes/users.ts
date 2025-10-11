@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { User } from "../models/User.js";
 import { requireAuth } from "../middleware/auth.js";
+import { Op } from "sequelize";
 
 const router = Router();
 
@@ -15,6 +16,7 @@ router.get("/", requireAuth, async (req, res) => {
   const pageSize = Math.min(50, Math.max(1, Number(req.query.pageSize) || 10));
   const offset = (page - 1) * pageSize;
   const sort = (req.query.sort as string) || "id_asc";
+  const q = (req.query.q as string) || "";
 
   let order: any = [["id", "ASC"]];
   if (sort === "id_desc") order = [["id", "DESC"]];
@@ -23,8 +25,18 @@ router.get("/", requireAuth, async (req, res) => {
   else if (sort === "role_asc") order = [["role", "ASC"]];
   else if (sort === "role_desc") order = [["role", "DESC"]];
 
+  const where = q
+    ? {
+        [Op.or]: [
+          { name: { [Op.like]: `%${q}%` } },
+          { email: { [Op.like]: `%${q}%` } },
+        ],
+      }
+    : undefined;
+
   const { rows, count } = await User.findAndCountAll({
     attributes: ["id", "name", "email", "role", "status"],
+    where,
     order,
     offset,
     limit: pageSize,

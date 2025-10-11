@@ -21,10 +21,17 @@ export default function AdminUsersPage() {
   const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
   const [sort, setSort] = useState<"id_asc" | "id_desc" | "name_asc" | "name_desc" | "role_asc" | "role_desc">("id_asc");
+  const [q, setQ] = useState("");
 
   const load = async () => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-    const res = await fetch(`${base}/api/users?page=${page}&pageSize=${pageSize}&sort=${sort}`, {
+    const qs = new URLSearchParams({
+      page: String(page),
+      pageSize: String(pageSize),
+      sort,
+      ...(q ? { q } : {}),
+    }).toString();
+    const res = await fetch(`${base}/api/users?${qs}`, {
       headers: { Authorization: `Bearer ${token || ""}` },
     });
     if (res.ok) {
@@ -37,7 +44,7 @@ export default function AdminUsersPage() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, page, sort]);
+  }, [token, page, sort, q]);
 
   const updateUser = async (id: number, patch: Partial<User>) => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -93,10 +100,9 @@ export default function AdminUsersPage() {
     <div className="py-8 space-y-6">
       <h1 className="text-2xl font-bold">Quản lý người dùng</h1>
 
-      <div className="flex gap-2">
-        <select
-          className="border rounded px-3 py-2"
-          value={sort}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+       <=select
+          className="border rounded pxort}
           onChange={(e) => setSort(e.target.value as any)}
         >
           <option value="id_asc">ID tăng dần</option>

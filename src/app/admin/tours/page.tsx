@@ -171,6 +171,20 @@ export default function AdminToursPage() {
                   type="number"
                   onBlur={(e) => updateTour(t.id, { price: Number(e.target.value) })}
                 />
+                <div className="flex items-center gap-2">
+                  <input
+                    className="border rounded px-2 py-1 flex-1"
+                    defaultValue={t.image || ""}
+                    onBlur={(e) => updateTour(t.id, { image: e.target.value })}
+                    placeholder="Image URL"
+                  />
+                  <ImageUpload
+                    folder="travelgo/tours"
+                    publicId={`tour_${t.id}`}
+                    onUploaded={(url) => updateTour(t.id, { image: url })}
+                    onUploadedPublicId={(pid) => updateTour(t.id, { imagePublicId: pid })}
+                  />
+                </div>
               </div>
             </div>
           ))}

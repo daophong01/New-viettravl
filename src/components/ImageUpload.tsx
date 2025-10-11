@@ -7,11 +7,13 @@ export default function ImageUpload({
   folder = "travelgo/tours",
   maxSizeMB = 5,
   publicId,
+  onUploadedPublicId,
 }: {
   onUploaded: (url: string) => void;
   folder?: string;
   maxSizeMB?: number;
   publicId?: string;
+  onUploadedPublicId?: (publicId: string) => void;
 }) {
   const [loading, setLoading] = useState(false);
 
@@ -46,7 +48,9 @@ export default function ImageUpload({
         { method: "POST", body: form }
       );
       const json = await uploadRes.json();
-      onUploaded(json.secure_url || json.url);
+      const url = json.secure_url || json.url;
+      if (url) onUploaded(url);
+      if (onUploadedPublicId && json.public_id) onUploadedPublicId(json.public_id);
     } finally {
       setLoading(false);
     }
