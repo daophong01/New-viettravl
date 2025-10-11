@@ -5,6 +5,11 @@ import { useAuth } from "@/src/store/auth";
 import { User } from "@/src/lib/types";
 import ConfirmDialog from "@/src/components/ConfirmDialog";
 import { useToast } from "@/src/store/toast";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default function AdminUsersPage() {
   const token = useAuth((s) => s.token);

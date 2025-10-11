@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/src/store/auth";
 import { Tour } from "@/src/lib/types";
 import ImageUpload from "@/src/components/ImageUpload";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default function AdminToursPage() {
   const token = useAuth((s) => s.token);
@@ -20,8 +25,11 @@ export default function AdminToursPage() {
   useEffect(() => {
     (async () => {
       const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-      const res = await fetch(`${base}/api/tours`);
-      if (res.ok) setTours(await res.json());
+      const res = await fetch(`${base}/api/tours?page=1&pageSize=100&sort=id_asc`);
+      if (res.ok) {
+        const data = await res.json();
+        setTours(Array.isArray(data) ? data : data.items || []);
+      }
     })();
   }, []);
 
@@ -110,7 +118,11 @@ export default function AdminToursPage() {
               value={form.image || ""}
               onChange={(e) => setForm((f) => ({ ...f, image: e.target.value }))}
             />
-            <ImageUpload onUploaded={(url) => setForm((f) => ({ ...f, image: url }))} />
+            <ImageUpload
+              publicId={form.title ? `tour_${form.title.replace(/\\s+/g, "_").toLowerCase()}_${Date.now()}` : undefined}
+              folder="travelgo/tours"
+              onUploaded={(url) => setForm((f) => ({ ...f, image: url }))}
+            />
           </div>
           <input
             placeholder="Mô tả"

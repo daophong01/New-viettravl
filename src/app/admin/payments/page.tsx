@@ -15,6 +15,12 @@ type Payment = {
   paymentIntentId?: string | null;
 };
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
+
 export default function AdminPaymentsPage() {
   const token = useAuth((s) => s.token);
   const [items, setItems] = useState<Payment[]>([]);
@@ -23,11 +29,21 @@ export default function AdminPaymentsPage() {
   const [total, setTotal] = useState(0);
   const [tours, setTours] = useState<Tour[]>([]);
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<"all" | "succeeded" | "failed" | "pending">("all");
+  const [sort, setSort] = useState<"id_desc" | "id_asc" | "date_desc" | "date_asc" | "amount_desc" | "amount_asc">("id_desc");
+  const [tourFilter, setTourFilter] = useState<number | "all">("all");
 
   const load = async () => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    const qs = new URLSearchParams({
+      page: String(page),
+      pageSize: String(pageSize),
+      sort,
+      status,
+      ...(tourFilter === "all" ? {} : { tourId: String(tourFilter) }),
+    }).toString();
     const [pRes, tRes] = await Promise.all([
-      fetch(`${base}/api/admin/payments?page=${page}&pageSize=${pageSize}`, {
+      fetch(`${base}/api/admin/payments?${qs}`, {
         headers: { Authorization: `Bearer ${token || ""}` },
       }),
       fetch(`${base}/api/tours?page=1&pageSize=100`),
@@ -46,7 +62,7 @@ export default function AdminPaymentsPage() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, page]);
+  }, [token, page, status, sort, tourFilter]);
 
   const tourTitle = (id: number | null) => {
     if (!id) return "-";
@@ -64,13 +80,50 @@ export default function AdminPaymentsPage() {
     <div className="py-8 space-y-6">
       <h1 className="text-2xl font-bold">Quản lý Payments</h1>
 
-      <div className="flex gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
         <input
-          className="border rounded px-3 py-2"
+          className="border rounded px-3 py-2 w-full"
           placeholder="Tìm theo email hoặc session id..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        <select
+          className="border rounded px-3 py-2 w-full"
+          value={status}
+          onChange={(e) => setStatus(e.target.value as any)}
+        >
+          <option value="all">Tất cả trạng thái</option>
+          <option value="succeeded">Thành công</option>
+          <option value="failed">Thất bại</option>
+          <option value="pending">Đang chờ</option>
+        </select>
+        <select
+          className="border rounded px-3 py-2 w-full"
+          value={sort}
+          onChange={(e) => setSort(e.target.value as any)}
+        >
+          <option value="id_desc">ID mới nhất</option>
+          <option value="id_asc">ID cũ nhất</option>
+          <option value="date_desc">Ngày mới nhất</option>
+          <option value="date_asc">Ngày cũ nhất</option>
+          <option value="amount_desc">Số tiền cao nhất</option>
+          <option value="amount_asc">Số tiền thấp nhất</option>
+        </select>
+        <select
+          className="border rounded px-3 py-2 w-full"
+          value={tourFilter === "all" ? "" : tourFilter}
+          onChange={(e) => {
+            const v = e.target.value;
+            setTourFilter(v ? Number(v) : "all");
+          }}
+        >
+          <option value="">Tất cả tours</option>
+          {tours.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.title}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="space-y-2">

@@ -6,6 +6,12 @@ import { Review, Tour, User } from "@/src/lib/types";
 import ConfirmDialog from "@/src/components/ConfirmDialog";
 import { useToast } from "@/src/store/toast";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
+
 export default function AdminReviewsPage() {
   const token = useAuth((s) => s.token);
   const push = useToast((s) => s.push);
@@ -23,12 +29,13 @@ export default function AdminReviewsPage() {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
+  const [sort, setSort] = useState<"id_desc" | "id_asc" | "date_desc" | "date_asc" | "rating_desc" | "rating_asc">("id_desc");
 
   const load = async () => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
     const [rRes, tRes, uRes] = await Promise.all([
-      fetch(`${base}/api/admin/reviews?page=${page}&pageSize=${pageSize}`, { headers: { Authorization: `Bearer ${token || ""}` } }),
-      fetch(`${base}/api/tours`),
+      fetch(`${base}/api/admin/reviews?page=${page}&pageSize=${pageSize}&sort=${sort}`, { headers: { Authorization: `Bearer ${token || ""}` } }),
+      fetch(`${base}/api/tours?page=1&pageSize=100`),
       fetch(`${base}/api/users?page=1&pageSize=100`, { headers: { Authorization: `Bearer ${token || ""}` } }),
     ]);
     if (rRes.ok) {
@@ -36,7 +43,10 @@ export default function AdminReviewsPage() {
       setReviews(data.items || []);
       setTotal(data.total || 0);
     }
-    if (tRes.ok) setTours(await tRes.json());
+    if (tRes.ok) {
+      const data = await tRes.json();
+      setTours(Array.isArray(data) ? data : data.items || []);
+    }
     if (uRes.ok) {
       const data = await uRes.json();
       setUsers(data.items || data || []);
@@ -46,7 +56,7 @@ export default function AdminReviewsPage() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, page]);
+  }, [token, page, sort]);
 
   const tourTitle = (id: number) => tours.find((t) => t.id === id)?.title || `#${id}`;
   const userEmail = (id: number) => users.find((u) => u.id === id)?.email || `#${id}`;
@@ -81,7 +91,7 @@ export default function AdminReviewsPage() {
     <div className="py-8 space-y-6">
       <h1 className="text-2xl font-bold">Quản lý Reviews</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
         <select
           className="border rounded px-3 py-2 w-full"
           value={tourId === "all" ? "" : tourId}
@@ -121,6 +131,18 @@ export default function AdminReviewsPage() {
           value={ratingMax ?? ""}
           onChange={(e) => setRatingMax(e.target.value ? Number(e.target.value) : undefined)}
         />
+        <select
+          className="border rounded px-3 py-2 w-full"
+          value={sort}
+          onChange={(e) => setSort(e.target.value as any)}
+        >
+          <option value="id_desc">ID mới nhất</option>
+          <option value="id_asc">ID cũ nhất</option>
+          <option value="date_desc">Ngày mới nhất</option>
+          <option value="date_asc">Ngày cũ nhất</option>
+          <option value="rating_desc">Rating cao nhất</option>
+          <option value="rating_asc">Rating thấp nhất</option>
+        </select>
       </div>
 
       <div className="space-y-2">

@@ -9,6 +9,12 @@ type BookingRow = Booking & {
   tour?: Tour;
 };
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
+
 export default function AdminBookingsPage() {
   const token = useAuth((s) => s.token);
   const [bookings, setBookings] = useState<BookingRow[]>([]);
@@ -17,12 +23,13 @@ export default function AdminBookingsPage() {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
+  const [sort, setSort] = useState<"id_desc" | "id_asc" | "date_desc" | "date_asc">("id_desc");
 
   const load = async () => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
     const [bRes, tRes, uRes] = await Promise.all([
-      fetch(`${base}/api/admin/bookings?page=${page}&pageSize=${pageSize}`, { headers: { Authorization: `Bearer ${token || ""}` } }),
-      fetch(`${base}/api/tours`),
+      fetch(`${base}/api/admin/bookings?page=${page}&pageSize=${pageSize}&sort=${sort}`, { headers: { Authorization: `Bearer ${token || ""}` } }),
+      fetch(`${base}/api/tours?page=1&pageSize=100`),
       fetch(`${base}/api/users?page=1&pageSize=100`, { headers: { Authorization: `Bearer ${token || ""}` } }),
     ]);
     if (bRes.ok) {
@@ -30,7 +37,10 @@ export default function AdminBookingsPage() {
       setBookings(data.items || []);
       setTotal(data.total || 0);
     }
-    if (tRes.ok) setTours(await tRes.json());
+    if (tRes.ok) {
+      const data = await tRes.json();
+      setTours(Array.isArray(data) ? data : data.items || []);
+    }
     if (uRes.ok) {
       const data = await uRes.json();
       setUsers(data.items || data || []);
@@ -40,7 +50,7 @@ export default function AdminBookingsPage() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, page]);
+  }, [token, page, sort]);
 
   const findTour = (id: number) => tours.find((t) => t.id === id);
   const findUser = (id: number) => users.find((u) => u.id === id);
@@ -48,6 +58,20 @@ export default function AdminBookingsPage() {
   return (
     <div className="py-8 space-y-6">
       <h1 className="text-2xl font-bold">Quản lý Bookings</h1>
+
+      <div className="flex gap-2">
+        <select
+          className="border rounded px-3 py-2"
+          value={sort}
+          onChange={(e) => setSort(e.target.value as any)}
+        >
+          <option value="id_desc">ID mới nhất</option>
+          <option value="id_asc">ID cũ nhất</option>
+          <option value="date_desc">Ngày mới nhất</option>
+          <option value="date_asc">Ngày cũ nhất</option>
+        </select>
+      </div>
+
       <div className="space-y-2">
         {bookings.length === 0 ? (
           <p className="text-sm">Chưa có bookings</p>

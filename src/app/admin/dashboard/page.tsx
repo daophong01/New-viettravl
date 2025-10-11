@@ -2,6 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/src/store/auth";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default function AdminDashboardPage() {
   const token = useAuth((s) => s.token);
