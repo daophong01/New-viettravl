@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/src/store/auth";
 import { Tour } from "@/src/lib/types";
 import Link from "next/link";
+import { useToast } from "@/src/store/toast";
 
 export default function UserFavoritesPage() {
   const token = useAuth((s) => s.token);
   const [tours, setTours] = useState<Tour[]>([]);
+  const push = useToast((s) => s.push);
 
   const load = async () => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -15,6 +17,21 @@ export default function UserFavoritesPage() {
       headers: { Authorization: `Bearer ${token || ""}` },
     });
     if (res.ok) setTours(await res.json());
+  };
+
+  const removeFav = async (tourId: number) => {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    const res = await fetch(`${base}/api/favorites/${tourId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token || ""}` },
+    });
+    if (res.ok) {
+      push({ text: "Đã bỏ khỏi yêu thích", type: "success" });
+      await load();
+    } else {
+      const err = await res.json().catch(() => ({}));
+      push({ text: err.error || "Thao tác thất bại", type: "error" });
+    }
   };
 
   useEffect(() => {
@@ -40,12 +57,20 @@ export default function UserFavoritesPage() {
                   currency: "VND",
                 }).format(t.price)}
               </div>
-              <Link
-                href={`/tours/${t.id}`}
-                className="px-3 py-1 rounded border hover:bg-black/5 text-sm inline-block"
-              >
-                Xem chi tiết
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/tours/${t.id}`}
+                  className="px-3 py-1 rounded border hover:bg-black/5 text-sm inline-block"
+                >
+                  Xem chi tiết
+                </Link>
+                <button
+                  onClick={() => removeFav(t.id)}
+                  className="px-3 py-1 rounded border hover:bg-red-100 text-sm"
+                >
+                  Bỏ yêu thích
+                </button>
+              </div>
             </div>
           ))}
         </div>

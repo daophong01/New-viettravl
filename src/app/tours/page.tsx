@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/src/store/auth";
 import TourCard from "@/src/components/TourCard";
 import SkeletonCard from "@/src/components/SkeletonCard";
 import { Tour } from "@/src/lib/types";
@@ -29,14 +30,18 @@ export const metadata: Metadata = {
 
 export default function ToursPage() {
   const [tours, setTours] = useState<Tour[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
   const [query, setQuery] = useState("");
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
   const [location, setLocation] = useState("");
   const [sort, setSort] = useState<"price_asc" | "price_desc" | "rating_desc">("rating_desc");
+  const [onlyFavs, setOnlyFavs] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 6;
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+
+  const token = useAuth((s) => s.token);
 
   const fetchPage = async (p: number) => {
     setLoading(true);
@@ -47,6 +52,24 @@ export default function ToursPage() {
       const items = Array.isArray(data) ? data : data.items || [];
       setTours(items);
       setTotal(Array.isArray(data) ? items.length : data.total || items.length);
+    }
+    // fetch favorites IDs (ignore errors)
+    try {
+      if (token) {
+        const favRes = await fetch(`${base}/api/favorites`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (favRes.ok) {
+          const favs = await favRes.json();
+          setFavoriteIds(favs.map((f: any) => f.tourId));
+        } else {
+          setFavoriteIds([]);
+        }
+      } else {
+        setFavoriteIds([]);
+      }
+    } catch {
+      setFavoriteIds([]);
     }
     setLoading(false);
   };
@@ -64,7 +87,8 @@ export default function ToursPage() {
       .filter((t) =>
         location ? t.location.toLowerCase().includes(location.toLowerCase()) : true
       )
-      .filter((t) => (maxPrice ? t.price <= maxPrice : true));
+      .filter((t) => (maxPrice ? t.price <= maxPrice : true))
+      .filter((t) => (onlyFavs ? favoriteIds.includes(t.id as any) : true));
     // client-side sort already matched with server sort, keep for UX
     switch (sort) {
       case "price_asc":
@@ -78,7 +102,7 @@ export default function ToursPage() {
         break;
     }
     return data;
-  }, [tours, query, maxPrice, location, sort]);
+  }, [tours, query, maxPrice, location, sort, onlyFavs, favoriteIds]);
 
   useEffect(() => {
     setPage(1);
@@ -99,11 +123,19 @@ export default function ToursPage() {
         sort={sort}
         onSortChange={setSort}
       />
+      <div className="flex items-center gap-2">
+        <label className="text-sm flex items-center gap-1">
+          <input type="checkbox" checked={onlyFavs} onChange={(e) => setOnlyFavs(e.target.checked)} />
+          Chỉ hiển thị tour yêu thích
+        </label>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {loading
           ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
-          : filtered.map((t) => <TourCard key={t.id} tour={t} />)}
+          : filtered.map((t) => (
+              <TourCard key={t.id} tour={t} isFavorited={favoriteIds.includes(t.id as any)} />
+            ))}
       </div>
 
       <div className="flex items-center justify-center gap-2">

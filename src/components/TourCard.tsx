@@ -3,13 +3,17 @@ import Link from "next/link";
 import { Tour } from "@/src/lib/types";
 import { useAuth } from "@/src/store/auth";
 import { useToast } from "@/src/store/toast";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export default function TourCard({ tour }: { tour: Tour }) {
+export default function TourCard({ tour, isFavorited }: { tour: Tour; isFavorited?: boolean }) {
   const token = useAuth((s) => s.token);
   const push = useToast((s) => s.push);
   const [favLoading, setFavLoading] = useState(false);
-  const [favorited, setFavorited] = useState<boolean | null>(null);
+  const [favorited, setFavorited] = useState<boolean>(!!isFavorited);
+
+  useEffect(() => {
+    setFavorited(!!isFavorited);
+  }, [isFavorited]);
 
   const toggleFavorite = async () => {
     if (!token) {

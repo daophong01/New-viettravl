@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/src/store/auth";
 import AdminMenu from "@/src/components/AdminMenu";
 
@@ -12,16 +12,47 @@ export default function Header() {
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
 
+  const [favoritesCount, setFavoritesCount] = useState<number>(0);
+  const token = useAuth((s) => s.token);
+
+  useEffect(() => {
+    const fetchFavs = async () => {
+      if (!token) {
+        setFavoritesCount(0);
+        return;
+      }
+      try {
+        const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+        const res = await fetch(`${base}/api/favorites`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const items = await res.json();
+          setFavoritesCount(Array.isArray(items) ? items.length : 0);
+        }
+      } catch {
+        setFavoritesCount(0);
+      }
+    };
+    fetchFavs();
+  }, [token]);
+
   const navLink = (href: string, label: string) => {
     const active = pathname === href;
+    const isFavLink = href === "/user/favorites";
     return (
       <Link
         href={href}
         className={`px-3 py-2 rounded transition-colors ${
           active ? "bg-foreground text-background" : "hover:bg-black/5"
-        }`}
+        } flex items-center gap-2`}
       >
-        {label}
+        <span>{label}</span>
+        {isFavLink && favoritesCount > 0 && (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-foreground text-background">
+            {favoritesCount}
+          </span>
+        )}
       </Link>
     );
   };
