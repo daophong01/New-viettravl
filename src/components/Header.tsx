@@ -13,40 +13,57 @@ export default function Header() {
   const logout = useAuth((s) => s.logout);
 
   const [favoritesCount, setFavoritesCount] = useState<number>(0);
+  const [watchCount, setWatchCount] = useState<number>(0);
   const token = useAuth((s) => s.token);
 
   useEffect(() => {
-    const fetchFavs = async () => {
+    const fetchCounts = async () => {
       if (!token) {
         setFavoritesCount(0);
+        setWatchCount(0);
         return;
       }
       try {
         const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-        const res = await fetch(`${base}/api/favorites`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const items = await res.json();
+        const [favRes, watchRes] = await Promise.all([
+          fetch(`${base}/api/favorites`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${base}/api/watchlater`, { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+        if (favRes.ok) {
+          const items = await favRes.json();
           setFavoritesCount(Array.isArray(items) ? items.length : 0);
+        }
+        if (watchRes.ok) {
+          const items = await watchRes.json();
+          setWatchCount(Array.isArray(items) ? items.length : 0);
         }
       } catch {
         setFavoritesCount(0);
+        setWatchCount(0);
       }
     };
-    fetchFavs();
+    fetchCounts();
 
     const onFavChanged = (e: any) => {
       const delta = (e?.detail?.delta as number) || 0;
       setFavoritesCount((c) => Math.max(0, c + delta));
     };
+    const onWatchChanged = (e: any) => {
+      const delta = (e?.detail?.delta as number) || 0;
+      setWatchCount((c) => Math.max(0, c + delta));
+    };
     window.addEventListener("fav-changed", onFavChanged as any);
-    return () => window.removeEventListener("fav-changed", onFavChanged as any);
+    window.addEventListener("watch-changed", onWatchChanged as any);
+    return () => {
+      window.removeEventListener("fav-changed", onFavChanged as any);
+      window.removeEventListener("watch-changed", onWatchChanged as any);
+    };
   }, [token]);
 
   const navLink = (href: string, label: string) => {
     const active = pathname === href;
     const isFavLink = href === "/user/favorites";
+    const isWatchLink = href === "/user/watchlater";
     return (
       <Link
         href={href}
@@ -58,6 +75,11 @@ export default function Header() {
         {isFavLink && favoritesCount > 0 && (
           <span className="text-xs px-2 py-0.5 rounded-full bg-foreground text-background">
             {favoritesCount}
+          </span>
+        )}
+        {isWatchLink && watchCount > 0 && (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-foreground text-background">
+            {watchCount}
           </span>
         )}
       </Link>
@@ -78,6 +100,7 @@ export default function Header() {
           {navLink("/contact", "Contact")}
           {user?.role === "admin" && <AdminMenu />}
           {user && navLink("/user/favorites", "Yêu thích")}
+          {user && navLink("/user/watchlater", "Xem sau")}
           {user && navLink("/user/security", "Bảo mật")}
         </nav>
 

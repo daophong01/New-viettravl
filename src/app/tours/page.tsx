@@ -34,7 +34,7 @@ export default function ToursPage() {
   const [query, setQuery] = useState("");
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
   const [location, setLocation] = useState("");
-  const [sort, setSort] = useState<"price_asc" | "price_desc" | "rating_desc">("rating_desc");
+  const [sort, setSort] = useState<"price_asc" | "price_desc" | "rating_desc" | "favorites_desc">("rating_desc");
   const [onlyFavs, setOnlyFavs] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 6;

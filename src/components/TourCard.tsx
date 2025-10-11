@@ -10,6 +10,8 @@ export default function TourCard({ tour, isFavorited }: { tour: Tour; isFavorite
   const push = useToast((s) => s.push);
   const [favLoading, setFavLoading] = useState(false);
   const [favorited, setFavorited] = useState<boolean>(!!isFavorited);
+  const [watchLoading, setWatchLoading] = useState(false);
+  const [watchLater, setWatchLater] = useState<boolean>(false);
 
   useEffect(() => {
     setFavorited(!!isFavorited);
@@ -50,6 +52,41 @@ export default function TourCard({ tour, isFavorited }: { tour: Tour; isFavorite
     }
   };
 
+  const toggleWatchLater = async () => {
+    if (!token) {
+      push({ text: "Vui lòng đăng nhập để thêm vào xem sau", type: "info" });
+      return;
+    }
+    setWatchLoading(true);
+    try {
+      const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      const res = await fetch(`${base}/api/watchlater`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
+        },
+        body: JSON.stringify({ tourId: tour.id }),
+      });
+      if (res.ok) {
+        const before = watchLater;
+        const data = await res.json();
+        setWatchLater(data.watchLater);
+        const delta = data.watchLater === true && !before ? 1 : data.watchLater === false && before ? -1 : 0;
+        window.dispatchEvent(new CustomEvent("watch-changed", { detail: { delta } }));
+        push({
+          text: data.watchLater ? "Đã thêm vào xem sau" : "Đã bỏ khỏi xem sau",
+          type: "success",
+        });
+      } else {
+        const err = await res.json().catch(() => ({}));
+        push({ text: err.error || "Thao tác thất bại", type: "error" });
+      }
+    } finally {
+      setWatchLoading(false);
+    }
+  };
+
   return (
     <div className="rounded-lg border border-black/10 dark:border-white/15 overflow-hidden bg-background">
       <div className="relative h-40 w-full">
@@ -59,14 +96,24 @@ export default function TourCard({ tour, isFavorited }: { tour: Tour; isFavorite
           fill
           className="object-cover"
         />
-        <button
-          onClick={toggleFavorite}
-          disabled={favLoading}
-          className="absolute top-2 right-2 rounded-full bg-white/80 backdrop-blur px-3 py-1 text-sm border hover:bg-white"
-          aria-label="Yêu thích"
-        >
-          {favorited ? "♥" : "♡"}
-        </button>
+        <div className="absolute top-2 right-2 flex items-center gap-2">
+          <button
+            onClick={toggleFavorite}
+            disabled={favLoading}
+            className="rounded-full bg-white/80 backdrop-blur px-3 py-1 text-sm border hover:bg-white"
+            aria-label="Yêu thích"
+          >
+            {favorited ? "♥" : "♡"}
+          </button>
+          <button
+            onClick={toggleWatchLater}
+            disabled={watchLoading}
+            className="rounded-full bg-white/80 backdrop-blur px-3 py-1 text-sm border hover:bg-white"
+            aria-label="Xem sau"
+          >
+            {watchLater ? "⏰" : "＋"}
+          </button>
+        </div>
       </div>
       <div className="p-4 space-y-2">
         <h3 className="font-semibold">{tour.title}</h3>

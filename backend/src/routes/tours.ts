@@ -1,7 +1,9 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import { Tour } from "../models/Tour.js";
+import { Favorite } from "../models/Favorite.js";
 import cloudinary from "cloudinary";
+import { fn, col, literal } from "sequelize";
 
 const router = Router();
 
@@ -15,6 +17,24 @@ router.get("/", async (req, res) => {
   if (sort === "price_asc") order = [["price", "ASC"]];
   else if (sort === "price_desc") order = [["price", "DESC"]];
   else if (sort === "rating_desc") order = [["rating", "DESC"]];
+
+  // sort by most favorited (global)
+  if (sort === "favorites_desc") {
+    const { rows } = await Tour.findAndCountAll({
+      attributes: {
+        include: [[fn("COUNT", col("favorites.id")), "favCount"]],
+      },
+      include: [{ model: Favorite, attributes: [], required: false }],
+      group: ["tour.id"],
+      order: [[literal("favCount"), "DESC"]],
+      offset,
+      limit: pageSize,
+      subQuery: false,
+    });
+    // total = total tours (not filtered by favorites)
+    const total = await Tour.count();
+    return res.json({ items: rows, total, page, pageSize });
+  }
 
   const { rows, count } = await Tour.findAndCountAll({
     order,
