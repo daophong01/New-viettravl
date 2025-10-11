@@ -10,22 +10,32 @@ export default function ImageUpload({
   const [loading, setLoading] = useState(false);
 
   const handleFile = async (file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64 = reader.result as string;
-      setLoading(true);
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: base64 }),
-      });
-      setLoading(false);
-      if (res.ok) {
-        const json = await res.json();
-        onUploaded(json.secure_url || json.url);
+    setLoading(true);
+    try {
+      // Get signed params from backend
+      const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      const signRes = await fetch(`${base}/api/upload/sign`);
+      if (!signRes.ok) {
+        setLoading(false);
+        return;
       }
-    };
-    reader.readAsDataURL(file);
+      const { cloudName, apiKey, timestamp, signature } = await signRes.json();
+
+      const form = new FormData();
+      form.append("file", file);
+      form.append("api_key", apiKey);
+      form.append("timestamp", String(timestamp));
+      form.append("signature", signature);
+
+      const uploadRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        { method: "POST", body: form }
+      );
+      const json = await uploadRes.json();
+      onUploaded(json.secure_url || json.url);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

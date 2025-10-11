@@ -22,4 +22,18 @@ router.post("/login", async (req, res) => {
   res.json({ user, token });
 });
 
+router.get("/verify", async (req, res) => {
+  const auth = req.headers.authorization || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!token) return res.status(401).json({ error: "No token" });
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET || "supersecret") as any;
+    const user = await User.findByPk(payload.id);
+    if (!user) return res.status(401).json({ error: "Invalid token" });
+    res.json({ ok: true, user: { id: user.id, role: user.role, email: user.email } });
+  } catch {
+    return res.status(401).json({ error: "Invalid token" });
+  }
+});
+
 export default router;

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { Tour, Review } from "@/src/lib/types";
 
 async function getTour(id: string): Promise<Tour | null> {
@@ -18,6 +19,36 @@ async function getReviews(): Promise<Review[]> {
   });
   if (!res.ok) return [];
   return res.json();
+}
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const tour = await getTour(params.id);
+  const baseFrontend = process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000";
+  if (!tour) {
+    return { title: "Tour không tồn tại" };
+  }
+  const title = `${tour.title} | TravelGo`;
+  const description = `${tour.location} • ${tour.duration} • Giá ${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(tour.price)}`;
+  const url = `${baseFrontend}/tours/${params.id}`;
+  const images = [{ url: tour.image || "/next.svg", alt: tour.title }];
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      images,
+      type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: images.map((i) => i.url),
+    },
+  };
 }
 
 export default async function TourDetailPage({

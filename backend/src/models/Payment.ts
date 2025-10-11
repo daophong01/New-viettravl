@@ -8,6 +8,8 @@ export class Payment extends Model {
   declare status: "succeeded" | "failed" | "pending";
   declare userId: number | null;
   declare tourId: number | null;
+  declare customerEmail: string | null;
+  declare paymentIntentId: string | null;
 }
 
 Payment.init(
@@ -18,6 +20,8 @@ Payment.init(
     status: { type: DataTypes.ENUM("succeeded", "failed", "pending"), allowNull: false, defaultValue: "pending" },
     userId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
     tourId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
+    customerEmail: { type: DataTypes.STRING, allowNull: true },
+    paymentIntentId: { type: DataTypes.STRING, allowNull: true },
   },
   { sequelize, modelName: "payment" }
 );

@@ -9,6 +9,7 @@ import reviewRoutes from "./routes/reviews.js";
 import paymentRoutes from "./routes/payments.js";
 import userRoutes from "./routes/users.js";
 import adminRoutes from "./routes/admin.js";
+import uploadRoutes from "./routes/upload.js";
 import { User } from "./models/User.js";
 
 dotenv.config();
@@ -40,6 +41,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/upload", uploadRoutes);
 
 const PORT = process.env.PORT || 4000;
 

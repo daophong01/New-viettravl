@@ -62,20 +62,33 @@ router.post("/webhook", async (req, res) => {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const payment = await Payment.findOne({ where: { sessionId: session.id } });
+    const customerEmail = session.customer_details?.email || null;
+    const paymentIntentId =
+      typeof session.payment_intent === "string" ? session.payment_intent : (session.payment_intent as any)?.id || null;
+
     if (payment) {
-      await payment.update({ status: "succeeded" });
+      await payment.update({ status: "succeeded", customerEmail, paymentIntentId });
     } else {
       await Payment.create({
         sessionId: session.id,
-        amount: (session.amount_total || 0),
+        amount: session.amount_total || 0,
         status: "succeeded",
         userId: null,
         tourId: null,
+        customerEmail,
+        paymentIntentId,
       });
     }
   }
 
   res.json({ received: true });
+});
+
+// Current user's orders
+router.get("/me", requireAuth, async (req, res) => {
+  const userId = (req as any).user?.id;
+  const items = await Payment.findAll({ where: { userId }, order: [["id", "DESC"]] });
+  res.json(items);
 });
 
 export default router;
