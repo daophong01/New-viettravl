@@ -14,20 +14,33 @@ export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [tours, setTours] = useState<Tour[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+
+  const load = async () => {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    const [bRes, tRes, uRes] = await Promise.all([
+      fetch(`${base}/api/admin/bookings?page=${page}&pageSize=${pageSize}`, { headers: { Authorization: `Bearer ${token || ""}` } }),
+      fetch(`${base}/api/tours`),
+      fetch(`${base}/api/users?page=1&pageSize=100`, { headers: { Authorization: `Bearer ${token || ""}` } }),
+    ]);
+    if (bRes.ok) {
+      const data = await bRes.json();
+      setBookings(data.items || []);
+      setTotal(data.total || 0);
+    }
+    if (tRes.ok) setTours(await tRes.json());
+    if (uRes.ok) {
+      const data = await uRes.json();
+      setUsers(data.items || data || []);
+    }
+  };
 
   useEffect(() => {
-    (async () => {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-      const [bRes, tRes, uRes] = await Promise.all([
-        fetch(`${base}/api/admin/bookings`, { headers: { Authorization: `Bearer ${token || ""}` } }),
-        fetch(`${base}/api/tours`),
-        fetch(`${base}/api/users`, { headers: { Authorization: `Bearer ${token || ""}` } }),
-      ]);
-      if (bRes.ok) setBookings(await bRes.json());
-      if (tRes.ok) setTours(await tRes.json());
-      if (uRes.ok) setUsers(await uRes.json());
-    })();
-  }, [token]);
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, page]);
 
   const findTour = (id: number) => tours.find((t) => t.id === id);
   const findUser = (id: number) => users.find((u) => u.id === id);
@@ -53,6 +66,26 @@ export default function AdminBookingsPage() {
             </div>
           ))
         )}
+      </div>
+
+      <div className="flex items-center justify-center gap-2">
+        <button
+          className="px-3 py-1 rounded border hover:bg-black/5"
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+        >
+          Trang trước
+        </button>
+        <span className="text-sm">
+          {page} / {Math.max(1, Math.ceil(total / pageSize))}
+        </span>
+        <button
+          className="px-3 py-1 rounded border hover:bg-black/5"
+          onClick={() => setPage((p) => Math.min(Math.max(1, Math.ceil(total / pageSize)), p + 1))}
+          disabled={page >= Math.ceil(total / pageSize)}
+        >
+          Trang sau
+        </button>
       </div>
     </div>
   );

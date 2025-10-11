@@ -28,14 +28,32 @@ router.get("/dashboard", requireAuth, async (req, res) => {
 
 router.get("/bookings", requireAuth, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
-  const items = await Booking.findAll({ order: [["id", "DESC"]] });
-  res.json(items);
+
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const pageSize = Math.min(50, Math.max(1, Number(req.query.pageSize) || 10));
+  const offset = (page - 1) * pageSize;
+
+  const { rows, count } = await Booking.findAndCountAll({
+    order: [["id", "DESC"]],
+    offset,
+    limit: pageSize,
+  });
+  res.json({ items: rows, total: count, page, pageSize });
 });
 
 router.get("/reviews", requireAuth, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
-  const items = await Review.findAll({ order: [["id", "DESC"]] });
-  res.json(items);
+
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const pageSize = Math.min(50, Math.max(1, Number(req.query.pageSize) || 10));
+  const offset = (page - 1) * pageSize;
+
+  const { rows, count } = await Review.findAndCountAll({
+    order: [["id", "DESC"]],
+    offset,
+    limit: pageSize,
+  });
+  res.json({ items: rows, total: count, page, pageSize });
 });
 
 router.delete("/reviews/:id", requireAuth, async (req, res) => {
@@ -48,8 +66,17 @@ router.delete("/reviews/:id", requireAuth, async (req, res) => {
 
 router.get("/payments", requireAuth, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
-  const items = await Payment.findAll({ order: [["id", "DESC"]] });
-  res.json(items);
+
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const pageSize = Math.min(50, Math.max(1, Number(req.query.pageSize) || 10));
+  const offset = (page - 1) * pageSize;
+
+  const { rows, count } = await Payment.findAndCountAll({
+    order: [["id", "DESC"]],
+    offset,
+    limit: pageSize,
+  });
+  res.json({ items: rows, total: count, page, pageSize });
 });
 
 export default router;

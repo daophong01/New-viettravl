@@ -10,11 +10,18 @@ function isAdmin(req: any) {
 
 router.get("/", requireAuth, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
-  const users = await User.findAll({
+
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const pageSize = Math.min(50, Math.max(1, Number(req.query.pageSize) || 10));
+  const offset = (page - 1) * pageSize;
+
+  const { rows, count } = await User.findAndCountAll({
     attributes: ["id", "name", "email", "role", "status"],
     order: [["id", "ASC"]],
+    offset,
+    limit: pageSize,
   });
-  res.json(users);
+  res.json({ items: rows, total: count, page, pageSize });
 });
 
 router.put("/:id", requireAuth, async (req, res) => {

@@ -20,22 +20,33 @@ export default function AdminReviewsPage() {
   const [ratingMin, setRatingMin] = useState<number | undefined>(undefined);
   const [ratingMax, setRatingMax] = useState<number | undefined>(undefined);
 
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+
   const load = async () => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
     const [rRes, tRes, uRes] = await Promise.all([
-      fetch(`${base}/api/admin/reviews`, { headers: { Authorization: `Bearer ${token || ""}` } }),
+      fetch(`${base}/api/admin/reviews?page=${page}&pageSize=${pageSize}`, { headers: { Authorization: `Bearer ${token || ""}` } }),
       fetch(`${base}/api/tours`),
-      fetch(`${base}/api/users`, { headers: { Authorization: `Bearer ${token || ""}` } }),
+      fetch(`${base}/api/users?page=1&pageSize=100`, { headers: { Authorization: `Bearer ${token || ""}` } }),
     ]);
-    if (rRes.ok) setReviews(await rRes.json());
+    if (rRes.ok) {
+      const data = await rRes.json();
+      setReviews(data.items || []);
+      setTotal(data.total || 0);
+    }
     if (tRes.ok) setTours(await tRes.json());
-    if (uRes.ok) setUsers(await uRes.json());
+    if (uRes.ok) {
+      const data = await uRes.json();
+      setUsers(data.items || data || []);
+    }
   };
 
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, page]);
 
   const tourTitle = (id: number) => tours.find((t) => t.id === id)?.title || `#${id}`;
   const userEmail = (id: number) => users.find((u) => u.id === id)?.email || `#${id}`;
@@ -138,6 +149,26 @@ export default function AdminReviewsPage() {
             </div>
           ))
         )}
+      </div>
+
+      <div className="flex items-center justify-center gap-2">
+        <button
+          className="px-3 py-1 rounded border hover:bg-black/5"
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+        >
+          Trang trước
+        </button>
+        <span className="text-sm">
+          {page} / {Math.max(1, Math.ceil(total / pageSize))}
+        </span>
+        <button
+          className="px-3 py-1 rounded border hover:bg-black/5"
+          onClick={() => setPage((p) => Math.min(Math.max(1, Math.ceil(total / pageSize)), p + 1))}
+          disabled={page >= Math.ceil(total / pageSize)}
+        >
+          Trang sau
+        </button>
       </div>
 
       <ConfirmDialog

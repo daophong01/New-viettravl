@@ -12,18 +12,26 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [confirmId, setConfirmId] = useState<number | null>(null);
 
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+
   const load = async () => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-    const res = await fetch(`${base}/api/users`, {
+    const res = await fetch(`${base}/api/users?page=${page}&pageSize=${pageSize}`, {
       headers: { Authorization: `Bearer ${token || ""}` },
     });
-    if (res.ok) setUsers(await res.json());
+    if (res.ok) {
+      const data = await res.json();
+      setUsers(data.items || []);
+      setTotal(data.total || 0);
+    }
   };
 
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, page]);
 
   const updateUser = async (id: number, patch: Partial<User>) => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -132,6 +140,26 @@ export default function AdminUsersPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="flex items-center justify-center gap-2">
+        <button
+          className="px-3 py-1 rounded border hover:bg-black/5"
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+        >
+          Trang trước
+        </button>
+        <span className="text-sm">
+          {page} / {Math.max(1, Math.ceil(total / pageSize))}
+        </span>
+        <button
+          className="px-3 py-1 rounded border hover:bg-black/5"
+          onClick={() => setPage((p) => Math.min(Math.max(1, Math.ceil(total / pageSize)), p + 1))}
+          disabled={page >= Math.ceil(total / pageSize)}
+        >
+          Trang sau
+        </button>
       </div>
 
       <ConfirmDialog

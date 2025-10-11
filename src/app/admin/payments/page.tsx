@@ -15,16 +15,26 @@ type Payment = {
 export default function AdminPaymentsPage() {
   const token = useAuth((s) => s.token);
   const [items, setItems] = useState<Payment[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+
+  const load = async () => {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    const res = await fetch(`${base}/api/admin/payments?page=${page}&pageSize=${pageSize}`, {
+      headers: { Authorization: `Bearer ${token || ""}` },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setItems(data.items || []);
+      setTotal(data.total || 0);
+    }
+  };
 
   useEffect(() => {
-    (async () => {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-      const res = await fetch(`${base}/api/admin/payments`, {
-        headers: { Authorization: `Bearer ${token || ""}` },
-      });
-      if (res.ok) setItems(await res.json());
-    })();
-  }, [token]);
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, page]);
 
   return (
     <div className="py-8 space-y-6">
@@ -47,6 +57,26 @@ export default function AdminPaymentsPage() {
             </div>
           ))
         )}
+      </div>
+
+      <div className="flex items-center justify-center gap-2">
+        <button
+          className="px-3 py-1 rounded border hover:bg-black/5"
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+        >
+          Trang trước
+        </button>
+        <span className="text-sm">
+          {page} / {Math.max(1, Math.ceil(total / pageSize))}
+        </span>
+        <button
+          className="px-3 py-1 rounded border hover:bg-black/5"
+          onClick={() => setPage((p) => Math.min(Math.max(1, Math.ceil(total / pageSize)), p + 1))}
+          disabled={page >= Math.ceil(total / pageSize)}
+        >
+          Trang sau
+        </button>
       </div>
     </div>
   );
