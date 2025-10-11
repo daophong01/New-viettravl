@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
-import { User, Tour, Booking, Review, Payment } from "../models/index.js";
+import { User, Tour, Booking, Review, Payment, Favorite } from "../models/index.js";
+import { fn, col, literal } from "sequelize";
 import ExcelJS from "exceljs";
 
 const router = Router();
@@ -25,6 +26,23 @@ router.get("/dashboard", requireAuth, async (req, res) => {
     bookingsCount,
     reviewsCount,
   });
+});
+
+// Top favorites tours
+router.get("/top-favorites", requireAuth, async (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
+  const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
+  const rows = await Tour.findAll({
+    attributes: {
+      include: [[fn("COUNT", col("favorites.id")), "favCount"]],
+    },
+    include: [{ model: Favorite, attributes: [], required: false }],
+    group: ["tour.id"],
+    order: [[literal("favCount"), "DESC"]],
+    limit,
+    subQuery: false,
+  });
+  res.json(rows);
 });
 
 router.get("/bookings", requireAuth, async (req, res) => {
