@@ -44,6 +44,9 @@ export default async function TourDetailPage({
         <p className="text-black/70 dark:text-white/70">{tour.location} • {tour.duration}</p>
         <p className="font-semibold">
           {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(tour.price)}
+          {/* Hiển thị kết quả thanh toán từ Stripe */}
+          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+          {/* @ts-expect-error Server Component can read search params via headers only with advanced pattern; keeping simple UI note */}
         </p>
         <p className="text-sm leading-relaxed">{tour.description}</p>
         <div className="flex items-center gap-2 text-sm"><span>⭐ {tour.rating.toFixed(1)}</span></div>

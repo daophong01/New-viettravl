@@ -19,15 +19,18 @@ export default function AdminPage() {
 
   useEffect(() => {
     (async () => {
-      const t = await fetch("/api/tours").then((r) => r.json());
-      setTours(t);
-      // demo users từ mock không có endpoint, hiển thị tạm thời
-      setUsers([
-        { id: 1, name: "Nguyễn Văn A", email: "a@example.com", role: "user" },
-        { id: 2, name: "Admin", email: "admin@example.com", role: "admin" },
-      ]);
+      const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      const tRes = await fetch(`${base}/api/tours`);
+      if (tRes.ok) setTours(await tRes.json());
+
+      const usersRes = await fetch(`${base}/api/users`, {
+        headers: {
+          ...(user?.id ? { Authorization: `Bearer ${useAuth.getState().token}` } : {}),
+        } as any,
+      });
+      if (usersRes.ok) setUsers(await usersRes.json());
     })();
-  }, []);
+  }, [user]);
 
   if (!user || user.role !== "admin") {
     return (
@@ -41,9 +44,13 @@ export default function AdminPage() {
   }
 
   const createTour = async () => {
-    const res = await fetch("/api/tours", {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    const res = await fetch(`${base}/api/tours`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(user ? { Authorization: `Bearer ${useAuth.getState().token}` } : {}),
+      },
       body: JSON.stringify(form),
     });
     if (res.ok) {
@@ -54,9 +61,13 @@ export default function AdminPage() {
   };
 
   const updateTour = async (id: number, patch: Partial<Tour>) => {
-    const res = await fetch(`/api/tours/${id}`, {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    const res = await fetch(`${base}/api/tours/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(user ? { Authorization: `Bearer ${useAuth.getState().token}` } : {}),
+      },
       body: JSON.stringify(patch),
     });
     if (res.ok) {
@@ -66,7 +77,13 @@ export default function AdminPage() {
   };
 
   const deleteTour = async (id: number) => {
-    const res = await fetch(`/api/tours/${id}`, { method: "DELETE" });
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    const res = await fetch(`${base}/api/tours/${id}`, {
+      method: "DELETE",
+      headers: {
+        ...(user ? { Authorization: `Bearer ${useAuth.getState().token}` } : {}),
+      },
+    });
     if (res.ok) {
       setTours((prev) => prev.filter((t) => t.id !== id));
     }
