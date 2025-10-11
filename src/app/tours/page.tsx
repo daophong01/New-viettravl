@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import TourCard from "@/src/components/TourCard";
+import SkeletonCard from "@/src/components/SkeletonCard";
 import { Tour } from "@/src/lib/types";
 import SearchBar from "@/src/components/SearchBar";
 import FilterBox from "@/src/components/FilterBox";
@@ -15,6 +16,8 @@ export default function ToursPage() {
   const [page, setPage] = useState(1);
   const pageSize = 6;
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     (async () => {
       const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -22,6 +25,7 @@ export default function ToursPage() {
       if (res.ok) {
         setTours(await res.json());
       }
+      setLoading(false);
     })();
   }, []);
 
@@ -70,9 +74,9 @@ export default function ToursPage() {
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {paged.map((t) => (
-          <TourCard key={t.id} tour={t} />
-        ))}
+        {loading
+          ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
+          : paged.map((t) => <TourCard key={t.id} tour={t} />)}
       </div>
 
       <div className="flex items-center justify-center gap-2">

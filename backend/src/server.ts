@@ -15,7 +15,21 @@ dotenv.config();
 const app = express();
 
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ limit: "2mb" }));
+// raw body for stripe webhook
+app.use((req, res, next) => {
+  if (req.originalUrl === "/api/payments/webhook") {
+    (req as any).rawBody = "";
+    req.setEncoding("utf8");
+    req.on("data", (chunk) => {
+      (req as any).rawBody += chunk;
+    });
+    req.on("end", () => {
+      next();
+    });
+  } else {
+    express.json({ limit: "2mb" })(req, res, next);
+  }
+});
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 

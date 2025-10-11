@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
-import { User, Tour, Booking, Review } from "../models/index.js";
+import { User, Tour, Booking, Review, Payment } from "../models/index.js";
 
 const router = Router();
 
@@ -44,6 +44,12 @@ router.delete("/reviews/:id", requireAuth, async (req, res) => {
   if (!item) return res.status(404).json({ error: "Not found" });
   await item.destroy();
   res.json({ ok: true });
+});
+
+router.get("/payments", requireAuth, async (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
+  const items = await Payment.findAll({ order: [["id", "DESC"]] });
+  res.json(items);
 });
 
 export default router;
