@@ -12,6 +12,7 @@ import momoRoutes from "./routes/payments_momo.js";
 import paypalRoutes from "./routes/payments_paypal.js";
 import userRoutes from "./routes/users.js";
 import adminRoutes from "./routes/admin.js";
+import docsRoutes from "./routes/docs.js";
 import uploadRoutes from "./routes/upload.js";
 import supportRoutes from "./routes/support.js";
 import favoritesRoutes from "./routes/favorites.js";
@@ -19,6 +20,7 @@ import watchlaterRoutes from "./routes/watchlater.js";
 import eventsRoutes, { broadcast } from "./routes/events.js";
 import reportsRoutes from "./routes/reports.js";
 import { User } from "./models/User.js";
+import rateLimit from "express-rate-limit";
 
 dotenv.config();
 const app = express();
@@ -40,7 +42,15 @@ app.use((req, res, next) => {
   }
 });
 
+// Rate limiting for sensitive routes
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100, standardHeaders: true, legacyHeaders: false });
+const paymentsLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false });
+
+app.use("/api/auth", authLimiter);
+app.use("/api/payments", paymentsLimiter);
+
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
+app.use("/api/docs", docsRoutes);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/tours", tourRoutes);
