@@ -66,6 +66,10 @@ export default function AdminMenu() {
             <Link href="/admin/support" className="px-2 py-1 rounded hover:bg-black/5">
               Support
             </Link>
+            <div className="h-px bg-black/10 dark:bg-white/15 my-1" />
+            <Link href="/user/profile" className="px-2 py-1 rounded hover:bg-black/5">
+              Hồ sơ của tôi
+            </Link>
           </div>
         </div>
       )}

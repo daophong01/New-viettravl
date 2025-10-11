@@ -7,6 +7,7 @@ export type ToastMessage = {
   id: string;
   text: string;
   type?: "info" | "success" | "error";
+  durationMs?: number; // auto-dismiss duration
 };
 
 type ToastState = {
@@ -22,7 +23,10 @@ export const useToast = create<ToastState>()(
       toasts: [],
       push: (t) =>
         set((s) => ({
-          toasts: [...s.toasts, { id: Math.random().toString(36).slice(2), ...t }],
+          toasts: [
+            ...s.toasts,
+            { id: Math.random().toString(36).slice(2), durationMs: 4000, ...t },
+          ],
         })),
       remove: (id) => set((s) => ({ toasts: s.toasts.filter((x) => x.id !== id) })),
       clear: () => set({ toasts: [] }),
