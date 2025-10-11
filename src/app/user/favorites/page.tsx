@@ -5,6 +5,7 @@ import { useAuth } from "@/src/store/auth";
 import { Tour } from "@/src/lib/types";
 import Link from "next/link";
 import { useToast } from "@/src/store/toast";
+import PaymentButton from "@/src/components/PaymentButton";
 
 export default function UserFavoritesPage() {
   const token = useAuth((s) => s.token);
@@ -71,6 +72,7 @@ export default function UserFavoritesPage() {
                 >
                   Bỏ yêu thích
                 </button>
+                <PaymentButton tourId={t.id as any} title={t.title} amount={t.price as any} />
               </div>
             </div>
           ))}

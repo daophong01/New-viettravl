@@ -5,6 +5,7 @@ import { useAuth } from "@/src/store/auth";
 import { Tour } from "@/src/lib/types";
 import Link from "next/link";
 import { useToast } from "@/src/store/toast";
+import PaymentButton from "@/src/components/PaymentButton";
 
 export default function UserWatchLaterPage() {
   const token = useAuth((s) => s.token);
@@ -42,7 +43,7 @@ export default function UserWatchLaterPage() {
 
   return (
     <div className="py-8 space-y-6">
-      <h1 className="text-2xl font-bold">Xem sau của tôi</h1>
+      <h1 className="text-2xl font.bold">Xem sau của tôi</h1>
       {tours.length === 0 ? (
         <p className="text-sm">Chưa có tour xem sau. Hãy thêm từ trang danh sách hoặc chi tiết tour.</p>
       ) : (
@@ -71,6 +72,7 @@ export default function UserWatchLaterPage() {
                 >
                   Bỏ xem sau
                 </button>
+                <PaymentButton tourId={t.id as any} title={t.title} amount={t.price as any} />
               </div>
             </div>
           ))}

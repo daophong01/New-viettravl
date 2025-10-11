@@ -2,6 +2,8 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import { Tour } from "../models/Tour.js";
 import { Favorite } from "../models/Favorite.js";
+import { Booking } from "../models/Booking.js";
+import { Payment } from "../models/Payment.js";
 import cloudinary from "cloudinary";
 import { fn, col, literal } from "sequelize";
 
@@ -20,7 +22,7 @@ router.get("/", async (req, res) => {
 
   // sort by most favorited (global)
   if (sort === "favorites_desc") {
-    const { rows } = await Tour.findAndCountAll({
+    const rows = await Tour.findAll({
       attributes: {
         include: [[fn("COUNT", col("favorites.id")), "favCount"]],
       },
@@ -31,7 +33,40 @@ router.get("/", async (req, res) => {
       limit: pageSize,
       subQuery: false,
     });
-    // total = total tours (not filtered by favorites)
+    const total = await Tour.count();
+    return res.json({ items: rows, total, page, pageSize });
+  }
+
+  // sort by most booked (global)
+  if (sort === "bookings_desc") {
+    const rows = await Tour.findAll({
+      attributes: {
+        include: [[fn("COUNT", col("bookings.id")), "bookCount"]],
+      },
+      include: [{ model: Booking, attributes: [], required: false }],
+      group: ["tour.id"],
+      order: [[literal("bookCount"), "DESC"]],
+      offset,
+      limit: pageSize,
+      subQuery: false,
+    });
+    const total = await Tour.count();
+    return res.json({ items: rows, total, page, pageSize });
+  }
+
+  // sort by highest revenue (global, succeeded payments)
+  if (sort === "revenue_desc") {
+    const rows = await Tour.findAll({
+      attributes: {
+        include: [[fn("SUM", col("payments.amount")), "revenueSum"]],
+      },
+      include: [{ model: Payment, attributes: [], required: false, where: { status: "succeeded" } }],
+      group: ["tour.id"],
+      order: [[literal("revenueSum"), "DESC"]],
+      offset,
+      limit: pageSize,
+      subQuery: false,
+    });
     const total = await Tour.count();
     return res.json({ items: rows, total, page, pageSize });
   }

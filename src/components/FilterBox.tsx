@@ -35,7 +35,13 @@ export default function FilterBox({
         value={sort}
         onChange={(e) =>
           onSortChange(
-            e.target.value as "price_asc" | "price_desc" | "rating_desc" | "favorites_desc"
+            e.target.value as
+              | "price_asc"
+              | "price_desc"
+              | "rating_desc"
+              | "favorites_desc"
+              | "bookings_desc"
+              | "revenue_desc"
           )
         }
       >
@@ -43,6 +49,8 @@ export default function FilterBox({
         <option value="price_desc">Giá giảm dần</option>
         <option value="rating_desc">Đánh giá cao nhất</option>
         <option value="favorites_desc">Được yêu thích nhiều nhất</option>
+        <option value="bookings_desc">Được đặt nhiều nhất</option>
+        <option value="revenue_desc">Doanh thu cao nhất</option>
       </select>
     </div>
   );

@@ -171,4 +171,41 @@ router.get("/export/:type", requireAuth, async (req, res) => {
   }
 });
 
+router.get("/revenue", requireAuth, async (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
+  const period = (req.query.period as string) || "daily"; // daily, weekly, monthly
+  const limit = Math.min(180, Math.max(1, Number(req.query.limit) || 30));
+
+  const rows = await Payment.findAll({
+    where: { status: "succeeded" },
+    order: [["createdAt", "DESC"]],
+  });
+
+  function keyForDate(d: Date) {
+    if (period === "monthly") return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    if (period === "weekly") {
+      const date = new Date(d);
+      const day = date.getDay();
+      const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(date.setDate(diff));
+      return `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, "0")}-${String(monday.getDate()).padStart(2, "0")}`;
+    }
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+
+  const map = new Map<string, number>();
+  for (const p of rows) {
+    const d = new Date((p as any).createdAt);
+    const key = keyForDate(d);
+    map.set(key, (map.get(key) || 0) + p.amount);
+  }
+
+  const entries = Array.from(map.entries())
+    .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+    .slice(-limit)
+    .map(([label, total]) => ({ label, total }));
+
+  res.json(entries);
+});
+
 export default router;
