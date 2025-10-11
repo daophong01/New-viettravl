@@ -93,6 +93,46 @@ export default function AdminPage() {
     <div className="py-8 space-y-8">
       <h1 className="text-2xl font-bold">Admin Panel</h1>
 
+      {/* Dashboard stats */}
+      {(() => {
+        const DashboardStats = () => {
+          const [stats, setStats] = useState<{ usersCount: number; toursCount: number; bookingsCount: number; reviewsCount: number } | null>(null);
+          useEffect(() => {
+            (async () => {
+              const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+              const res = await fetch(`${base}/api/admin/dashboard`, {
+                headers: { Authorization: `Bearer ${useAuth.getState().token}` },
+              });
+              if (res.ok) setStats(await res.json());
+            })();
+          }, []);
+          if (!stats) return null;
+          return (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="border rounded p-3">
+                <div className="text-xs text-black/60">Users</div>
+                <div className="text-xl font-semibold">{stats.usersCount}</div>
+              </div>
+              <div className="border rounded p-3">
+                <div className="text-xs text-black/60">Tours</div>
+                <div className="text-xl font-semibold">{stats.toursCount}</div>
+              </div>
+              <div className="border rounded p-3">
+                <div className="text-xs text-black/60">Bookings</div>
+                <div className="text-xl font-semibold">{stats.bookingsCount}</div>
+              </div>
+              <div className="border rounded p-3">
+                <div className="text-xs text-black/60">Reviews</div>
+                <div className="text-xl font-semibold">{stats.reviewsCount}</div>
+              </div>
+            </div>
+          );
+        };
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error inline client component inside page
+        return <DashboardStats />;
+      })()}
+
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">Thêm tour mới</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

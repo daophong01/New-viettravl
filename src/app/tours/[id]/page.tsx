@@ -22,15 +22,33 @@ async function getReviews(): Promise<Review[]> {
 
 export default async function TourDetailPage({
   params,
+  searchParams,
 }: {
   params: { id: string };
+  searchParams?: { status?: "success" | "cancel" };
 }) {
   const tour = await getTour(params.id);
   if (!tour) return notFound();
   const reviews = (await getReviews()).filter((r) => r.tourId === tour.id);
 
+  const status = searchParams?.status;
+
   return (
     <div className="py-8 space-y-6">
+      {status && (
+        <div
+          className={`rounded p-3 text-sm ${
+            status === "success"
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
+          {status === "success"
+            ? "Thanh toán thành công. Cảm ơn bạn!"
+            : "Thanh toán bị hủy. Vui lòng thử lại."}
+        </div>
+      )}
+
       <div className="relative w-full h-56 md:h-80 rounded-lg overflow-hidden">
         <Image
           src={tour.image || "/next.svg"}
@@ -44,9 +62,6 @@ export default async function TourDetailPage({
         <p className="text-black/70 dark:text-white/70">{tour.location} • {tour.duration}</p>
         <p className="font-semibold">
           {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(tour.price)}
-          {/* Hiển thị kết quả thanh toán từ Stripe */}
-          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-          {/* @ts-expect-error Server Component can read search params via headers only with advanced pattern; keeping simple UI note */}
         </p>
         <p className="text-sm leading-relaxed">{tour.description}</p>
         <div className="flex items-center gap-2 text-sm"><span>⭐ {tour.rating.toFixed(1)}</span></div>
