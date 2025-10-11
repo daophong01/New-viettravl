@@ -2,6 +2,8 @@ import dotenv from "dotenv";
 import { sequelize } from "./config/database.js";
 import { User } from "./models/User.js";
 import { Tour } from "./models/Tour.js";
+import { Booking } from "./models/Booking.js";
+import { Review } from "./models/Review.js";
 
 dotenv.config();
 
@@ -12,9 +14,9 @@ async function run() {
 
     // Seed admin if missing
     const adminEmail = "admin@example.com";
-    const admin = await User.findOne({ where: { email: adminEmail } });
+    let admin = await User.findOne({ where: { email: adminEmail } });
     if (!admin) {
-      await User.create({
+      admin = await User.create({
         name: "Admin",
         email: adminEmail,
         password: "admin123",
@@ -25,9 +27,9 @@ async function run() {
 
     // Seed a demo user
     const userEmail = "user@example.com";
-    const user = await User.findOne({ where: { email: userEmail } });
-    if (!user) {
-      await User.create({
+    let demoUser = await User.findOne({ where: { email: userEmail } });
+    if (!demoUser) {
+      demoUser = await User.create({
         name: "Người dùng demo",
         email: userEmail,
         password: "user123",
@@ -90,6 +92,29 @@ async function run() {
         },
       ]);
       console.log("Seeded tours");
+    }
+
+    // Seed bookings and reviews demo
+    const tours = await Tour.findAll({ limit: 3 });
+    if (tours.length > 0) {
+      const existingBookings = await Booking.count();
+      if (existingBookings === 0) {
+        await Booking.bulkCreate([
+          { userId: demoUser!.id, tourId: tours[0].id, status: "booked" },
+          { userId: demoUser!.id, tourId: tours[1].id, status: "booked" },
+          { userId: admin!.id, tourId: tours[2].id, status: "booked" },
+        ]);
+        console.log("Seeded bookings");
+      }
+      const existingReviews = await Review.count();
+      if (existingReviews === 0) {
+        await Review.bulkCreate([
+          { userId: demoUser!.id, tourId: tours[0].id, rating: 5, comment: "Hành trình tuyệt vời, dịch vụ chu đáo!" },
+          { userId: demoUser!.id, tourId: tours[1].id, rating: 4, comment: "Khung cảnh đẹp, sẽ quay lại vào mùa hoa." },
+          { userId: admin!.id, tourId: tours[2].id, rating: 5, comment: "Rất đáng trải nghiệm!" },
+        ]);
+        console.log("Seeded reviews");
+      }
     }
 
     console.log("Seeding complete");

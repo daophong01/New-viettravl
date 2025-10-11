@@ -7,6 +7,7 @@ import { User } from "@/src/lib/types";
 export default function AdminUsersPage() {
   const token = useAuth((s) => s.token);
   const [users, setUsers] = useState<User[]>([]);
+  const [message, setMessage] = useState<string | null>(null);
 
   const load = async () => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -32,6 +33,35 @@ export default function AdminUsersPage() {
       body: JSON.stringify(patch),
     });
     if (res.ok) {
+      setMessage("Cập nhật người dùng thành công");
+      await load();
+    }
+  };
+
+  const resetPassword = async (id: number) => {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    const res = await fetch(`${base}/api/users/${id}/reset-password`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token || ""}`,
+      },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setMessage(`Mật khẩu mới cho ${data.email}: ${data.newPassword}`);
+    }
+  };
+
+  const deleteUser = async (id: number) => {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    const res = await fetch(`${base}/api/users/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token || ""}`,
+      },
+    });
+    if (res.ok) {
+      setMessage("Đã xóa người dùng");
       await load();
     }
   };
@@ -39,6 +69,7 @@ export default function AdminUsersPage() {
   return (
     <div className="py-8 space-y-6">
       <h1 className="text-2xl font-bold">Quản lý người dùng</h1>
+      {message && <p className="text-sm">{message}</p>}
       <div className="space-y-2">
         {users.map((u) => (
           <div key={u.id} className="border rounded p-3 flex items-center justify-between">
@@ -78,6 +109,18 @@ export default function AdminUsersPage() {
                   Khóa
                 </button>
               )}
+              <button
+                onClick={() => resetPassword(u.id)}
+                className="px-3 py-1 rounded border hover:bg-black/5 text-sm"
+              >
+                Reset mật khẩu
+              </button>
+              <button
+                onClick={() => deleteUser(u.id)}
+                className="px-3 py-1 rounded border hover:bg-red-100 text-sm"
+              >
+                Xóa
+              </button>
             </div>
           </div>
         ))}

@@ -38,11 +38,31 @@ export default function Header() {
           {navLink("/about", "About")}
           {navLink("/contact", "Contact")}
           {user?.role === "admin" && (
-            <>
-              {navLink("/admin/dashboard", "Admin Dashboard")}
-              {navLink("/admin/users", "Admin Users")}
-              {navLink("/admin/tours", "Admin Tours")}
-            </>
+            // Admin dropdown
+            (() => {
+              // inline component state via closure
+              // eslint-disable-next-line react-hooks/rules-of-hooks
+              const [adminOpen, setAdminOpen] = useState(false);
+              return (
+                <div className="relative">
+                  <button
+                    className="px-3 py-2 rounded border hover:bg-black/5"
+                    onClick={() => setAdminOpen((v) => !v)}
+                  >
+                    Admin
+                  </button>
+                  {adminOpen && (
+                    <div className="absolute right-0 mt-2 w-48 rounded border bg-background shadow">
+                      <div className="flex flex-col p-2">
+                        {navLink("/admin/dashboard", "Dashboard")}
+                        {navLink("/admin/users", "Users")}
+                        {navLink("/admin/tours", "Tours")}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()
           )}
         </nav>
 
