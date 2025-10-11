@@ -39,6 +39,7 @@ export default function Header() {
           {navLink("/about", "About")}
           {navLink("/contact", "Contact")}
           {user?.role === "admin" && <AdminMenu />}
+          {user && navLink("/user/favorites", "Yêu thích")}
           {user && navLink("/user/security", "Bảo mật")}
         </nav>
 
@@ -144,6 +145,12 @@ export default function Header() {
                   className="px-3 py-2 rounded border border-black/10 dark:border-white/15 hover:bg-black/5 w-full text-center"
                 >
                   Hồ sơ
+                </Link>
+                <Link
+                  href="/user/favorites"
+                  className="px-3 py-2 rounded border border-black/10 dark:border-white/15 hover:bg-black/5 w-full text-center"
+                >
+                  Yêu thích
                 </Link>
                 <Link
                   href="/user/dashboard"

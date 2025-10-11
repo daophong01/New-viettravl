@@ -5,6 +5,7 @@ import { Review } from "./Review.js";
 import { Payment } from "./Payment.js";
 import { SupportMessage } from "./SupportMessage.js";
 import { LoginEvent } from "./LoginEvent.js";
+import { Favorite } from "./Favorite.js";
 
 // Associations
 User.hasMany(Booking, { foreignKey: "userId" });
@@ -31,4 +32,10 @@ SupportMessage.belongsTo(User, { foreignKey: "userId" });
 User.hasMany(LoginEvent, { foreignKey: "userId" });
 LoginEvent.belongsTo(User, { foreignKey: "userId" });
 
-export { User, Tour, Booking, Review, Payment, SupportMessage, LoginEvent };
+User.hasMany(Favorite, { foreignKey: "userId" });
+Favorite.belongsTo(User, { foreignKey: "userId" });
+
+Tour.hasMany(Favorite, { foreignKey: "tourId" });
+Favorite.belongsTo(Tour, { foreignKey: "tourId" });
+
+export { User, Tour, Booking, Review, Payment, SupportMessage, LoginEvent, Favorite };

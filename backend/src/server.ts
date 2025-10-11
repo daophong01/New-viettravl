@@ -11,6 +11,7 @@ import userRoutes from "./routes/users.js";
 import adminRoutes from "./routes/admin.js";
 import uploadRoutes from "./routes/upload.js";
 import supportRoutes from "./routes/support.js";
+import favoritesRoutes from "./routes/favorites.js";
 import { User } from "./models/User.js";
 
 dotenv.config();
@@ -44,6 +45,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/support", supportRoutes);
+app.use("/api/favorites", favoritesRoutes);
 
 const PORT = process.env.PORT || 4000;
 

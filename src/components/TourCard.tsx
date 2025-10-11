@@ -1,8 +1,48 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Tour } from "@/src/lib/types";
+import { useAuth } from "@/src/store/auth";
+import { useToast } from "@/src/store/toast";
+import { useState } from "react";
 
 export default function TourCard({ tour }: { tour: Tour }) {
+  const token = useAuth((s) => s.token);
+  const push = useToast((s) => s.push);
+  const [favLoading, setFavLoading] = useState(false);
+  const [favorited, setFavorited] = useState<boolean | null>(null);
+
+  const toggleFavorite = async () => {
+    if (!token) {
+      push({ text: "Vui lòng đăng nhập để thêm vào yêu thích", type: "info" });
+      return;
+    }
+    setFavLoading(true);
+    try {
+      const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      const res = await fetch(`${base}/api/favorites`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
+        },
+        body: JSON.stringify({ tourId: tour.id }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFavorited(data.favorited);
+        push({
+          text: data.favorited ? "Đã thêm vào yêu thích" : "Đã bỏ khỏi yêu thích",
+          type: "success",
+        });
+      } else {
+        const err = await res.json().catch(() => ({}));
+        push({ text: err.error || "Thao tác thất bại", type: "error" });
+      }
+    } finally {
+      setFavLoading(false);
+    }
+  };
+
   return (
     <div className="rounded-lg border border-black/10 dark:border-white/15 overflow-hidden bg-background">
       <div className="relative h-40 w-full">
@@ -12,6 +52,14 @@ export default function TourCard({ tour }: { tour: Tour }) {
           fill
           className="object-cover"
         />
+        <button
+          onClick={toggleFavorite}
+          disabled={favLoading}
+          className="absolute top-2 right-2 rounded-full bg-white/80 backdrop-blur px-3 py-1 text-sm border hover:bg-white"
+          aria-label="Yêu thích"
+        >
+          {favorited ? "♥" : "♡"}
+        </button>
       </div>
       <div className="p-4 space-y-2">
         <h3 className="font-semibold">{tour.title}</h3>
