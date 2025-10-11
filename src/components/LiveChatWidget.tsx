@@ -12,20 +12,35 @@ export default function LiveChatWidget() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
+  const [aiMode, setAiMode] = useState(false);
+  const [aiReply, setAiReply] = useState<string | null>(null);
+
   const submit = async () => {
     if (!message.trim()) return;
     setSending(true);
     try {
       const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-      const res = await fetch(`${base}/api/support/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, message }),
-      });
-      if (res.ok) {
-        setMessage("");
-        setSent(true);
-        setTimeout(() => setSent(false), 3000);
+      if (aiMode) {
+        const res = await fetch(`${base}/api/support/ai`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAiReply(data.reply || "Không có phản hồi.");
+        }
+      } else {
+        const res = await fetch(`${base}/api/support/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, message }),
+        });
+        if (res.ok) {
+          setMessage("");
+          setSent(true);
+          setTimeout(() => setSent(false), 3000);
+        }
       }
     } finally {
       setSending(false);
@@ -48,22 +63,36 @@ export default function LiveChatWidget() {
             <button className="text-sm" onClick={() => setOpen(false)}>Đóng</button>
           </div>
           <div className="p-3 space-y-2">
-            <input
-              className="border rounded px-2 py-1 w-full text-sm"
-              placeholder="Tên của bạn"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <input
-              className="border rounded px-2 py-1 w-full text-sm"
-              placeholder="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+            <div className="flex items-center gap-2">
+              <label className="text-xs flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={aiMode}
+                  onChange={(e) => setAiMode(e.target.checked)}
+                />
+                Dùng trợ lý AI
+              </label>
+            </div>
+            {!aiMode && (
+              <>
+                <input
+                  className="border rounded px-2 py-1 w-full text-sm"
+                  placeholder="Tên của bạn"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+                <input
+                  className="border rounded px-2 py-1 w-full text-sm"
+                  placeholder="Email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </>
+            )}
             <textarea
               className="border rounded px-2 py-1 w-full text-sm"
-              placeholder="Tin nhắn..."
+              placeholder={aiMode ? "Hỏi trợ lý AI..." : "Tin nhắn..."}
               rows={3}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -73,9 +102,15 @@ export default function LiveChatWidget() {
               onClick={submit}
               disabled={sending}
             >
-              {sending ? "Đang gửi..." : "Gửi"}
+              {sending ? "Đang gửi..." : aiMode ? "Hỏi AI" : "Gửi"}
             </button>
-            {sent && <div className="text-xs text-green-700">Đã gửi tin nhắn, chúng tôi sẽ phản hồi sớm.</div>}
+            {aiMode && aiReply && (
+              <div className="text-xs bg-black/5 dark:bg-white/10 rounded p-2">
+                <strong>Phản hồi AI:</strong>
+                <div className="mt-1 whitespace-pre-line">{aiReply}</div>
+              </div>
+            )}
+            {!aiMode && sent && <div className="text-xs text-green-700">Đã gửi tin nhắn, chúng tôi sẽ phản hồi sớm.</div>}
           </div>
         </div>
       )}
