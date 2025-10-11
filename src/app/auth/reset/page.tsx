@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useToast } from "@/src/store/toast";
 
 function passwordStrength(pw: string) {
   let score = 0;
@@ -17,16 +18,17 @@ export default function ResetPasswordPage() {
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [resetting, setResetting] = useState(false);
+  const push = useToast((s) => s.push);
 
   const strength = useMemo(() => passwordStrength(newPassword), [newPassword]);
 
   const reset = async () => {
     if (!email || !code || !newPassword) {
-      alert("Vui lòng nhập đầy đủ email, mã, mật khẩu mới");
+      push({ text: "Vui lòng nhập đầy đủ email, mã, mật khẩu mới", type: "info" });
       return;
     }
     if (strength < 3) {
-      alert("Mật khẩu mới quá yếu. Vui lòng dùng ít nhất 8 ký tự, gồm chữ hoa, chữ thường và số.");
+      push({ text: "Mật khẩu mới quá yếu. Vui lòng dùng ít nhất 8 ký tự, gồm chữ hoa, chữ thường và số.", type: "error" });
       return;
     }
     setResetting(true);
@@ -38,13 +40,13 @@ export default function ResetPasswordPage() {
         body: JSON.stringify({ email, code, newPassword }),
       });
       if (res.ok) {
-        alert("Đặt lại mật khẩu thành công. Vui lòng đăng nhập.");
+        push({ text: "Đặt lại mật khẩu thành công. Vui lòng đăng nhập.", type: "success" });
         setEmail("");
         setCode("");
         setNewPassword("");
       } else {
         const err = await res.json().catch(() => ({}));
-        alert(err.error || "Đặt lại mật khẩu thất bại");
+        push({ text: err.error || "Đặt lại mật khẩu thất bại", type: "error" });
       }
     } finally {
       setResetting(false);

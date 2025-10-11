@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/src/store/auth";
 import ImageUpload from "@/src/components/ImageUpload";
+import { useToast } from "@/src/store/toast";
 
 function passwordStrength(pw: string) {
   let score = 0;
@@ -40,6 +41,8 @@ export default function UserSettingsPage() {
     setAvatar(user?.avatar || null);
   }, [user]);
 
+  const push = useToast((s) => s.push);
+
   const saveProfile = async () => {
     setSaving(true);
     try {
@@ -55,10 +58,10 @@ export default function UserSettingsPage() {
       if (res.ok) {
         const data = await res.json();
         setUser({ ...(user || {}), name: data.name, avatar: data.avatar });
-        alert("Đã lưu thay đổi hồ sơ");
+        push({ text: "Đã lưu thay đổi hồ sơ", type: "success" });
       } else {
         const err = await res.json().catch(() => ({}));
-        alert(err.error || "Lưu thất bại");
+        push({ text: err.error || "Lưu thất bại", type: "error" });
       }
     } finally {
       setSaving(false);
@@ -67,11 +70,11 @@ export default function UserSettingsPage() {
 
   const changePassword = async () => {
     if (!oldPassword || !newPassword) {
-      alert("Vui lòng nhập đầy đủ mật khẩu hiện tại và mật khẩu mới");
+      push({ text: "Vui lòng nhập đầy đủ mật khẩu hiện tại và mật khẩu mới", type: "info" });
       return;
     }
     if (newPwStrength < 3) {
-      alert("Mật khẩu mới quá yếu. Vui lòng dùng ít nhất 8 ký tự, gồm chữ hoa, chữ thường và số.");
+      push({ text: "Mật khẩu mới quá yếu. Vui lòng dùng ít nhất 8 ký tự, gồm chữ hoa, chữ thường và số.", type: "error" });
       return;
     }
     setChanging(true);
@@ -88,10 +91,10 @@ export default function UserSettingsPage() {
       if (res.ok) {
         setOldPassword("");
         setNewPassword("");
-        alert("Đổi mật khẩu thành công");
+        push({ text: "Đổi mật khẩu thành công", type: "success" });
       } else {
         const err = await res.json().catch(() => ({}));
-        alert(err.error || "Đổi mật khẩu thất bại");
+        push({ text: err.error || "Đổi mật khẩu thất bại", type: "error" });
       }
     } finally {
       setChanging(false);
@@ -100,7 +103,7 @@ export default function UserSettingsPage() {
 
   const requestEmailChange = async () => {
     if (!newEmail) {
-      alert("Vui lòng nhập email mới");
+      push({ text: "Vui lòng nhập email mới", type: "info" });
       return;
     }
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -115,18 +118,17 @@ export default function UserSettingsPage() {
     if (res.ok) {
       setEmailRequested(true);
       const data = await res.json().catch(() => ({}));
-      // Chú ý: trong thực tế sẽ gửi code qua email. Ở môi trường dev, hiển thị code để test nhanh.
-      if (data?.code) alert(`Mã xác nhận (dev): ${data.code}`);
-      alert("Đã gửi mã xác nhận tới email mới (dev: hiển thị code để test).");
+      if (data?.code) push({ text: `Mã xác nhận (dev): ${data.code}`, type: "info" });
+      push({ text: "Đã gửi mã xác nhận tới email mới", type: "success" });
     } else {
       const err = await res.json().catch(() => ({}));
-      alert(err.error || "Yêu cầu đổi email thất bại");
+      push({ text: err.error || "Yêu cầu đổi email thất bại", type: "error" });
     }
   };
 
   const confirmEmailChange = async () => {
     if (!emailCode) {
-      alert("Vui lòng nhập mã xác nhận");
+      push({ text: "Vui lòng nhập mã xác nhận", type: "info" });
       return;
     }
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -141,13 +143,13 @@ export default function UserSettingsPage() {
     if (res.ok) {
       const data = await res.json().catch(() => ({}));
       setUser({ ...(user || {}), email: data.email });
-      alert("Đã đổi email thành công");
+      push({ text: "Đã đổi email thành công", type: "success" });
       setEmailRequested(false);
       setEmailCode("");
       setNewEmail("");
     } else {
       const err = await res.json().catch(() => ({}));
-      alert(err.error || "Xác nhận đổi email thất bại");
+      push({ text: err.error || "Xác nhận đổi email thất bại", type: "error" });
     }
   };
 

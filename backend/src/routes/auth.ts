@@ -3,8 +3,25 @@ import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
 import { requireAuth } from "../middleware/auth.js";
 import cloudinary from "cloudinary";
+import nodemailer from "nodemailer";
 
 const router = Router();
+
+function getTransport() {
+  const host = process.env.SMTP_HOST;
+  const port = Number(process.env.SMTP_PORT || 0);
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  if (host && port && user && pass) {
+    return nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      auth: { user, pass },
+    });
+  }
+  return null;
+}
 
 router.post("/register", async (req, res) => {
   const { name, email, password } = req.body || {};
@@ -80,7 +97,23 @@ router.post("/request-email-change", requireAuth, async (req: any, res) => {
   const code = Math.random().toString(36).slice(2, 8);
   const expires = new Date(Date.now() + 15 * 60 * 1000);
   await user.update({ pendingEmail: newEmail, emailChangeCode: code, emailChangeExpires: expires });
-  res.json({ ok: true, code }); // In real app, send via email
+
+  const transporter = getTransport();
+  const from = process.env.SMTP_FROM || "no-reply@travelgo.local";
+  if (transporter) {
+    try {
+      await transporter.sendMail({
+        from,
+        to: newEmail,
+        subject: "TravelGo - Mã xác nhận đổi email",
+        text: `Mã xác nhận đổi email của bạn là: ${code} (hết hạn sau 15 phút).`,
+      });
+      return res.json({ ok: true });
+    } catch (e: any) {
+      return res.status(500).json({ error: e.message || "Failed to send email" });
+    }
+  }
+  res.json({ ok: true, code }); // Dev fallback
 });
 
 // Confirm email change
@@ -107,7 +140,24 @@ router.post("/forgot-password", async (req, res) => {
   const code = Math.random().toString(36).slice(2, 8);
   const expires = new Date(Date.now() + 15 * 60 * 1000);
   await user.update({ resetCode: code, resetExpires: expires });
-  res.json({ ok: true, code }); // In real app, send via email
+
+  const transporter = getTransport();
+  const from = process.env.SMTP_FROM || "no-reply@travelgo.local";
+  if (transporter) {
+    try {
+      await transporter.sendMail({
+        from,
+        to: email,
+        subject: "TravelGo - Mã đặt lại mật khẩu",
+        text: `Mã đặt lại mật khẩu của bạn là: ${code} (hết hạn sau 15 phút).`,
+      });
+      return res.json({ ok: true });
+    } catch (e: any) {
+      return res.status(500).json({ error: e.message || "Failed to send email" });
+    }
+  }
+
+  res.json({ ok: true, code }); // Dev fallback
 });
 
 // Reset password with code

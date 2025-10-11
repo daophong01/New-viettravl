@@ -1,14 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/src/store/toast";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [devCode, setDevCode] = useState<string | null>(null);
+  const push = useToast((s) => s.push);
 
   const send = async () => {
-    if (!email) return;
+    if (!email) {
+      push({ text: "Vui lòng nhập email", type: "info" });
+      return;
+    }
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
     const res = await fetch(`${base}/api/auth/forgot-password`, {
       method: "POST",
@@ -19,6 +24,10 @@ export default function ForgotPasswordPage() {
     if (res.ok) {
       const data = await res.json().catch(() => ({}));
       if (data?.code) setDevCode(data.code);
+      push({ text: "Đã gửi mã đặt lại mật khẩu", type: "success" });
+    } else {
+      const err = await res.json().catch(() => ({}));
+      push({ text: err.error || "Gửi mã thất bại", type: "error" });
     }
   };
 

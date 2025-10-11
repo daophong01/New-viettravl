@@ -55,6 +55,12 @@ export default function Header() {
               )}
               <span className="text-sm">Xin chào, {user.name}</span>
               <Link
+                href="/user/profile"
+                className="px-3 py-2 rounded border border-black/10 dark:border-white/15 hover:bg-black/5"
+              >
+                Hồ sơ
+              </Link>
+              <Link
                 href="/user/dashboard"
                 className="px-3 py-2 rounded border border-black/10 dark:border-white/15 hover:bg-black/5"
               >
@@ -121,9 +127,23 @@ export default function Header() {
               </>
             )}
           </div>
-          <div className="flex gap-2 mt-2">
+          <div className="flex flex-col gap-2 mt-2">
             {user ? (
               <>
+                <div className="flex items-center gap-3">
+                  {user.avatar ? (
+                    <img src={user.avatar} alt="avatar" className="w-8 h-8 rounded-full object-cover border" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full border bg-black/5" />
+                  )}
+                  <span className="text-sm">Xin chào, {user.name}</span>
+                </div>
+                <Link
+                  href="/user/profile"
+                  className="px-3 py-2 rounded border border-black/10 dark:border-white/15 hover:bg-black/5 w-full text-center"
+                >
+                  Hồ sơ
+                </Link>
                 <Link
                   href="/user/dashboard"
                   className="px-3 py-2 rounded border border-black/10 dark:border-white/15 hover:bg-black/5 w-full text-center"
