@@ -185,6 +185,11 @@ export default function AdminToursPage() {
                     onUploadedPublicId={(pid) => updateTour(t.id, { imagePublicId: pid })}
                   />
                 </div>
+                {/* Quick payment test */}
+                {(() => {
+                  const PaymentButton = require("@/src/components/PaymentButton").default;
+                  return <PaymentButton tourId={t.id as any} title={t.title} amount={t.price as any} />;
+                })()}
               </div>
             </div>
           ))}

@@ -175,6 +175,8 @@ router.get("/revenue", requireAuth, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
   const period = (req.query.period as string) || "daily"; // daily, weekly, monthly
   const limit = Math.min(180, Math.max(1, Number(req.query.limit) || 30));
+  const startDate = req.query.startDate ? new Date(String(req.query.startDate)) : null;
+  const endDate = req.query.endDate ? new Date(String(req.query.endDate)) : null;
 
   const rows = await Payment.findAll({
     where: { status: "succeeded" },
@@ -195,8 +197,10 @@ router.get("/revenue", requireAuth, async (req, res) => {
 
   const map = new Map<string, number>();
   for (const p of rows) {
-    const d = new Date((p as any).createdAt);
-    const key = keyForDate(d);
+    const created = new Date((p as any).createdAt);
+    if (startDate && created < startDate) continue;
+    if (endDate && created > endDate) continue;
+    const key = keyForDate(created);
     map.set(key, (map.get(key) || 0) + p.amount);
   }
 
@@ -206,6 +210,36 @@ router.get("/revenue", requireAuth, async (req, res) => {
     .map(([label, total]) => ({ label, total }));
 
   res.json(entries);
+});
+
+// Top bookings by tour
+router.get("/top-bookings", requireAuth, async (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
+  const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
+  const rows = await Tour.findAll({
+    attributes: { include: [[fn("COUNT", col("bookings.id")), "bookCount"]] },
+    include: [{ model: Booking, attributes: [], required: false }],
+    group: ["tour.id"],
+    order: [[literal("bookCount"), "DESC"]],
+    limit,
+    subQuery: false,
+  });
+  res.json(rows);
+});
+
+// Top revenue by tour (succeeded payments)
+router.get("/top-revenue", requireAuth, async (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
+  const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
+  const rows = await Tour.findAll({
+    attributes: { include: [[fn("SUM", col("payments.amount")), "revenueSum"]] },
+    include: [{ model: Payment, attributes: [], required: false, where: { status: "succeeded" } }],
+    group: ["tour.id"],
+    order: [[literal("revenueSum"), "DESC"]],
+    limit,
+    subQuery: false,
+  });
+  res.json(rows);
 });
 
 export default router;

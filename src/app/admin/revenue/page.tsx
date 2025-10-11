@@ -8,11 +8,19 @@ type Datum = { label: string; total: number };
 export default function AdminRevenuePage() {
   const token = useAuth((s) => s.token);
   const [period, setPeriod] = useState<"daily" | "weekly" | "monthly">("daily");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
   const [items, setItems] = useState<Datum[]>([]);
 
   const load = async () => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-    const res = await fetch(`${base}/api/admin/revenue?period=${period}&limit=30`, {
+    const qs = new URLSearchParams({
+      period,
+      limit: "30",
+      ...(startDate ? { startDate } : {}),
+      ...(endDate ? { endDate } : {}),
+    }).toString();
+    const res = await fetch(`${base}/api/admin/revenue?${qs}`, {
       headers: { Authorization: `Bearer ${token || ""}` },
     });
     if (res.ok) setItems(await res.json());
@@ -21,14 +29,14 @@ export default function AdminRevenuePage() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period, token]);
+  }, [period, token, startDate, endDate]);
 
   const max = useMemo(() => Math.max(1, ...items.map((i) => i.total)), [items]);
 
   return (
     <div className="py-8 space-y-6">
       <h1 className="text-2xl font-bold">Thống kê doanh thu</h1>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <label className="text-sm">Chu kỳ:</label>
         <select
           className="border rounded px-3 py-2"
@@ -39,6 +47,21 @@ export default function AdminRevenuePage() {
           <option value="weekly">Theo tuần</option>
           <option value="monthly">Theo tháng</option>
         </select>
+        <label className="text-sm ml-4">Từ ngày:</label>
+        <input
+          type="date"
+          className="border rounded px-3 py-2"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+        />
+        <label className="text-sm">Đến ngày:</label>
+        <input
+          type="date"
+          className="border rounded px-3 py-2"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+        />
+        <button onClick={load} className="px-3 py-2 rounded border hover:bg-black/5">Lọc</button>
       </div>
 
       {items.length === 0 ? (
