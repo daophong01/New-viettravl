@@ -37,7 +37,13 @@ export default function Header() {
           {navLink("/tours", "Tours")}
           {navLink("/about", "About")}
           {navLink("/contact", "Contact")}
-          {user?.role === "admin" && navLink("/admin", "Admin")}
+          {user?.role === "admin" && (
+            <>
+              {navLink("/admin/dashboard", "Admin Dashboard")}
+              {navLink("/admin/users", "Admin Users")}
+              {navLink("/admin/tours", "Admin Tours")}
+            </>
+          )}
         </nav>
 
         <div className="hidden md:flex items-center gap-2">
@@ -90,7 +96,9 @@ export default function Header() {
             {navLink("/tours", "Tours")}
             {navLink("/about", "About")}
             {navLink("/contact", "Contact")}
-            {user?.role === "admin" && navLink("/admin", "Admin")}
+            {user?.role === "admin" && (
+              <>
+                {navAdmin")}
           </div>
           <div className="flex gap-2 mt-2">
             {user ? (

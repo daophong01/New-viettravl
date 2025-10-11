@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "ts-node-dev --respawn src/server.ts",
     "start": "node dist/server.js",
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "seed": "ts-node-dev src/seed.ts"
   },
   "dependencies": {
     "express": "^4.19.2",
