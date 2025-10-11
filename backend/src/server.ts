@@ -17,6 +17,7 @@ import supportRoutes from "./routes/support.js";
 import favoritesRoutes from "./routes/favorites.js";
 import watchlaterRoutes from "./routes/watchlater.js";
 import eventsRoutes, { broadcast } from "./routes/events.js";
+import reportsRoutes from "./routes/reports.js";
 import { User } from "./models/User.js";
 
 dotenv.config();
