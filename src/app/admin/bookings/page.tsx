@@ -55,6 +55,18 @@ export default function AdminBookingsPage() {
   const findTour = (id: number) => tours.find((t) => t.id === id);
   const findUser = (id: number) => users.find((u) => u.id === id);
 
+  const updateStatus = async (id: number, patch: Partial<Booking>) => {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    const res = await fetch(`${base}/api/admin/bookings/${id}/status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token || ""}` },
+      body: JSON.stringify(patch),
+    });
+    if (res.ok) {
+      await load();
+    }
+  };
+
   return (
     <div className="py-8 space-y-6">
       <h1 className="text-2xl font-bold">Quản lý Bookings</h1>
@@ -93,16 +105,30 @@ export default function AdminBookingsPage() {
           <p className="text-sm">Chưa có bookings</p>
         ) : (
           bookings.map((b) => (
-            <div key={b.id} className="border rounded p-3">
+            <div key={b.id} className="border rounded p-3 space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-sm">Mã đặt: {b.id}</span>
                 <span className="text-xs text-black/60 dark:text-white/60">
                   {b.createdAt ? new Date(b.createdAt).toLocaleString("vi-VN") : ""}
                 </span>
               </div>
-              <p className="text-sm">Trạng thái: {b.status}</p>
+              <p className="text-sm">Trạng thái: {b.status} • Thanh toán: {b.paymentStatus || "pending"}</p>
+              <p className="text-sm">Ngày khởi hành: {b.departureDate ? new Date(b.departureDate as any).toLocaleDateString("vi-VN") : "-"}</p>
               <p className="text-sm">Người dùng: {findUser(b.userId)?.email || `#${b.userId}`}</p>
               <p className="text-sm">Tour: {findTour(b.tourId)?.title || `#${b.tourId}`}</p>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button onClick={() => updateStatus(b.id, { status: "confirmed" } as any)} className="px-3 py-1 rounded border hover:bg-black/5 text-sm">Xác nhận</button>
+                <button onClick={() => updateStatus(b.id, { status: "cancelled" } as any)} className="px-3 py-1 rounded border hover:bg-black/5 text-sm">Hủy</button>
+                <button onClick={() => updateStatus(b.id, { status: "refunded", paymentStatus: "paid" } as any)} className="px-3 py-1 rounded border hover:bg.black/5 text-sm">Hoàn tiền</button>
+                <button onClick={() => updateStatus(b.id, { status: "completed" } as any)} className="px-3 py-1 rounded border hover:bg-black/5 text-sm">Hoàn thành</button>
+                <input
+                  type="date"
+                  className="border rounded px-2 py-1 text-sm"
+                  defaultValue={b.departureDate ? new Date(b.departureDate as any).toISOString().slice(0, 10) : ""}
+                  onBlur={(e) => updateStatus(b.id, { departureDate: e.target.value as any } as any)}
+                />
+              </div>
             </div>
           ))
         )}

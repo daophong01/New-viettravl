@@ -13,18 +13,50 @@ function isAdmin(req: any) {
 router.get("/dashboard", requireAuth, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
 
-  const [usersCount, toursCount, bookingsCount, reviewsCount] = await Promise.all([
-    User.count(),
-    Tour.count(),
-    Booking.count(),
-    Review.count(),
-  ]);
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  const [usersCount, newUsersCount, toursCount, activeToursCount, upcomingToursCount, bookingsCount, confirmedCount, completedCount, cancelledCount, refundedCount, monthRevenue] =
+    await Promise.all([
+      User.count(),
+      User.count({ where: { createdAt: { $gte: monthStart as any, $lt: nextMonthStart as any } as any } as any }),
+      Tour.count(),
+      Tour.count({ where: { active: true } as any }),
+      Tour.count({ where: { startDate: { $gte: now as any } } as any }),
+      Booking.count(),
+      Booking.count({ where: { status: "confirmed" } as any }),
+      Booking.count({ where: { status: "completed" } as any }),
+      Booking.count({ where: { status: "cancelled" } as any }),
+      Booking.count({ where: { status: "refunded" } as any }),
+      Payment.sum("amount", { where: { status: "succeeded", createdAt: { $gte: monthStart as any, $lt: nextMonthStart as any } as any } as any }) as any,
+    ]);
+
+  // top 5 best selling tours by bookings (confirmed+completed) in current month
+  const topRows = await Tour.findAll({
+    attributes: { include: [[fn("COUNT", col("bookings.id")), "bookCount"]] },
+    include: [
+      { model: Booking, attributes: [], required: false, where: { status: ["confirmed", "completed"] as any, bookedAt: { $gte: monthStart as any, $lt: nextMonthStart as any } as any } },
+    ],
+    group: ["tour.id"],
+    order: [[literal("bookCount"), "DESC"]],
+    limit: 5,
+    subQuery: false,
+  });
 
   res.json({
     usersCount,
+    newUsersCount,
     toursCount,
+    activeToursCount,
+    upcomingToursCount,
     bookingsCount,
-    reviewsCount,
+    confirmedCount,
+    completedCount,
+    cancelledCount,
+    refundedCount,
+    monthRevenue: Number(monthRevenue || 0),
+    topSelling: topRows,
   });
 });
 
@@ -74,6 +106,21 @@ router.get("/bookings", requireAuth, async (req, res) => {
     limit: pageSize,
   });
   res.json({ items: rows, total: count, page, pageSize });
+});
+
+// Update booking status/paymentStatus/departureDate
+router.post("/bookings/:id/status", requireAuth, async (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "Forbidden" });
+  const id = Number(req.params.id);
+  const { status, paymentStatus, departureDate } = req.body || {};
+  const booking = await Booking.findByPk(id);
+  if (!booking) return res.status(404).json({ error: "Not found" });
+  const patch: any = {};
+  if (status) patch.status = status;
+  if (paymentStatus) patch.paymentStatus = paymentStatus;
+  if (departureDate) patch.departureDate = departureDate;
+  await booking.update(patch);
+  res.json(booking);
 });
 
 router.get("/reviews", requireAuth, async (req, res) => {

@@ -11,6 +11,10 @@ export class Tour extends Model {
   declare imagePublicId: string | null;
   declare description: string;
   declare rating: number;
+  declare category: "domestic" | "international";
+  declare startDate: Date | null;
+  declare seatsLeft: number;
+  declare active: boolean;
 }
 
 Tour.init(
@@ -24,6 +28,10 @@ Tour.init(
     imagePublicId: { type: DataTypes.STRING, allowNull: true },
     description: { type: DataTypes.TEXT, allowNull: true },
     rating: { type: DataTypes.FLOAT, allowNull: false, defaultValue: 0 },
+    category: { type: DataTypes.ENUM("domestic", "international"), allowNull: false, defaultValue: "domestic" },
+    startDate: { type: DataTypes.DATE, allowNull: true },
+    seatsLeft: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, defaultValue: 0 },
+    active: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
   },
   { sequelize, modelName: "tour" }
 );
