@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 
 const ToastContainer = dynamic(() => import("@/src/components/ToastContainer"), { ssr: false });
 const LiveChatWidget = dynamic(() => import("@/src/components/LiveChatWidget"), { ssr: false });
+const AdminEventsListener = dynamic(() => import("@/src/components/AdminEventsListener"), { ssr: false });
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,6 +39,7 @@ export default function RootLayout({
         <Footer />
         <ToastContainer />
         <LiveChatWidget />
+        <AdminEventsListener />
       </body>
     </html>
   );

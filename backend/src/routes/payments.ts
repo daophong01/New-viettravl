@@ -2,6 +2,7 @@ import { Router } from "express";
 import Stripe from "stripe";
 import { requireAuth } from "../middleware/auth.js";
 import { Payment } from "../models/Payment.js";
+import { broadcast } from "./events.js";
 
 const router = Router();
 
@@ -39,6 +40,8 @@ router.post("/checkout", requireAuth, async (req, res) => {
       status: "pending",
       userId: (req as any).user?.id || null,
       tourId: tourId || null,
+      paymentMethod: "stripe",
+      currency: "VND",
     });
 
     res.json({ url: session.url });
@@ -68,8 +71,9 @@ router.post("/webhook", async (req, res) => {
 
     if (payment) {
       await payment.update({ status: "succeeded", customerEmail, paymentIntentId });
+      broadcast({ type: "payment_succeeded", sessionId: payment.sessionId, amount: payment.amount, userId: payment.userId, tourId: payment.tourId, method: "stripe" });
     } else {
-      await Payment.create({
+      const created = await Payment.create({
         sessionId: session.id,
         amount: session.amount_total || 0,
         status: "succeeded",
@@ -77,7 +81,10 @@ router.post("/webhook", async (req, res) => {
         tourId: null,
         customerEmail,
         paymentIntentId,
+        paymentMethod: "stripe",
+        currency: "VND",
       });
+      broadcast({ type: "payment_succeeded", sessionId: created.sessionId, amount: created.amount, userId: created.userId, tourId: created.tourId, method: "stripe" });
     }
   }
 
