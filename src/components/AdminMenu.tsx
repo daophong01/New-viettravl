@@ -89,6 +89,9 @@ export default function AdminMenu() {
             <Link href="/admin/analytics" className="px-2 py-1 rounded hover:bg-black/5">
               Analytics
             </Link>
+            <Link href="/admin/notifications" className="px-2 py-1 rounded hover:bg-black/5">
+              Notifications
+            </Link>
             <div className="h-px bg-black/10 dark:bg-white/15 my-1" />
             <Link href="/user/profile" className="px-2 py-1 rounded hover:bg-black/5">
               Hồ sơ của tôi

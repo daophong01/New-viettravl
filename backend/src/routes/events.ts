@@ -3,7 +3,16 @@ import { requireAuth } from "../middleware/auth.js";
 
 const clients: Array<{ id: string; res: any }> = [];
 
+import { Notification } from "../models/Notification.js";
+
 export function broadcast(event: any) {
+  // Persist notification for supported types
+  if (event?.type === "booking_created" || event?.type === "payment_succeeded") {
+    try {
+      Notification.create({ type: event.type, payload: JSON.stringify(event) }).catch(() => {});
+    } catch {}
+  }
+
   const data = `data: ${JSON.stringify(event)}\n\n`;
   for (const c of clients) {
     try {

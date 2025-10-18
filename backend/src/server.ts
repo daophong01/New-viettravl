@@ -19,6 +19,7 @@ import favoritesRoutes from "./routes/favorites.js";
 import watchlaterRoutes from "./routes/watchlater.js";
 import eventsRoutes, { broadcast } from "./routes/events.js";
 import reportsRoutes from "./routes/reports.js";
+import notificationsRoutes from "./routes/notifications.js";
 import { User } from "./models/User.js";
 import rateLimit from "express-rate-limit";
 
@@ -67,6 +68,8 @@ app.use("/api/support", supportRoutes);
 app.use("/api/favorites", favoritesRoutes);
 app.use("/api/watchlater", watchlaterRoutes);
 app.use("/api/admin/events", eventsRoutes);
+app.use("/api/reports", reportsRoutes);
+app.use("/api/admin/notifications", notificationsRoutes);events", eventsRoutes);
 
 const PORT = process.env.PORT || 4000;
 
