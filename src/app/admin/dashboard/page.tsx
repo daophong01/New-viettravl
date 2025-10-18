@@ -2,11 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/src/store/auth";
-import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  robots: { index: false, follow: false },
-};
 
 type Overview = {
   usersCount: number;

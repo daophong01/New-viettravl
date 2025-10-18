@@ -4,11 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/src/store/auth";
 import { Tour } from "@/src/lib/types";
 import ImageUpload from "@/src/components/ImageUpload";
-import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  robots: { index: false, follow: false },
-};
 
 export default function AdminToursPage() {
   const token = useAuth((s) => s.token);

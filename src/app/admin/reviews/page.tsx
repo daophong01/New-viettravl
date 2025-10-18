@@ -6,11 +6,7 @@ import { Review, Tour, User } from "@/src/lib/types";
 import ConfirmDialog from "@/src/components/ConfirmDialog";
 import { useToast } from "@/src/store/toast";
 
-import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  robots: { index: false, follow: false },
-};
 
 export default function AdminReviewsPage() {
   const token = useAuth((s) => s.token);
