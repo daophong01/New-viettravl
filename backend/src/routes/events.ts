@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { requireAuth } from "../middleware/auth.js";
 
 const clients: Array<{ id: string; res: any }> = [];
 
@@ -13,7 +14,14 @@ export function broadcast(event: any) {
 
 const router = Router();
 
-router.get("/stream", (req, res) => {
+function canStream(req: any) {
+  const role = (req.user?.role || "").toLowerCase();
+  return ["admin", "superadmin", "tourmanager", "financeadmin", "supportstaff", "contenteditor"].includes(role);
+}
+
+router.get("/stream", requireAuth, (req: any, res) => {
+  if (!canStream(req)) return res.status(403).json({ error: "Forbidden" });
+
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
