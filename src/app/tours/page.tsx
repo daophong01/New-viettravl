@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 "use client";
+import type { Metadata } from "next";
 
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/src/store/auth";
