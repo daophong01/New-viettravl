@@ -10,6 +10,8 @@ export default function AdminMenu() {
   const ref = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
   const user = useAuth((s) => s.user);
+  const token = useAuth((s) => s.token);
+  const [notifCount, setNotifCount] = useState<number>(0);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -30,6 +32,27 @@ export default function AdminMenu() {
     // Close on route change
     setOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    let timer: any;
+    const loadCount = async () => {
+      const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      const res = await fetch(`${base}/api/admin/notifications/unread-count`, {
+        headers: { Authorization: `Bearer ${token || ""}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNotifCount(Number(data.count || 0));
+      }
+    };
+    if (open) {
+      loadCount();
+      timer = setInterval(loadCount, 30000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [open, token]);
 
   return (
     <div ref={ref} className="relative">

@@ -27,6 +27,33 @@ router.get("/", requireAuth, async (req: any, res) => {
   res.json({ items: rows, total: count, page, pageSize });
 });
 
+// Unread count
+router.get("/unread-count", requireAuth, async (req: any, res) => {
+  if (!hasRole(req, ["admin", "superadmin", "tourmanager", "financeadmin", "supportstaff", "contenteditor"])) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  const count = await Notification.count({ where: { read: false } as any });
+  res.json({ count });
+});
+
+// Export CSV
+router.get("/export", requireAuth, async (req: any, res) => {
+  if (!hasRole(req, ["admin", "superadmin", "tourmanager", "financeadmin", "supportstaff", "contenteditor"])) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  const items = await Notification.findAll({ order: [["id", "DESC"]] });
+  const headers = ["id", "type", "payload", "read", "createdAt"];
+  const lines = [headers.join(",")];
+  for (const n of items) {
+    const obj: any = n.toJSON ? n.toJSON() : n;
+    lines.push(headers.map((h) => JSON.stringify(obj[h] ?? "")).join(","));
+  }
+  const csv = lines.join("\n");
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", "attachment; filename=notifications.csv");
+  res.send(csv);
+});
+
 // Mark as read
 router.post("/mark-read", requireAuth, async (req: any, res) => {
   if (!hasRole(req, ["admin", "superadmin", "tourmanager", "financeadmin", "supportstaff", "contenteditor"])) {
